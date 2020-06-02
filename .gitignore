@@ -32,11 +32,13 @@
 *.app
 
 # Visual Studio
+.vs/
 bin/
 obj/
 Debug/
 Release/
 *.csproj.user
+*.vcxproj.user
 
 # Visual Studio Code
 .vscode/.browse.c_cpp.db*
