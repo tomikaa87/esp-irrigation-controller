@@ -45,3 +45,5 @@ Release/
 
 # PlatformIO
 .pio
+
+PrivateConfig.h
