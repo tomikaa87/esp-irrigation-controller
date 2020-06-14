@@ -25,5 +25,5 @@ GPIO2           | Zone 2 Relay Output
 GPIO3           | Zone 3 Relay Output
 GPIO4           | Zone 4 Relay Output
 GPIO5           | Zone 5 Relay Output
-GPIO6           | Green LED
-GPIO7           | Red LED
+GPIO6           | Pump 0 Output
+GPIO7           | Pump 1 Output

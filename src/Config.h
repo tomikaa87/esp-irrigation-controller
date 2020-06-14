@@ -1,5 +1,7 @@
 #pragma once
 
+#include "PrivateConfig.h"
+
 #include <Arduino.h>
 
 namespace Config
