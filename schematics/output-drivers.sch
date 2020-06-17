@@ -1254,19 +1254,19 @@ Wire Wire Line
 Wire Wire Line
 	2350 4350 2750 4350
 Text GLabel 1300 2400 0    50   Input ~ 0
-~OUT_0_DRIVE~
+OUT_0_DRIVE
 Text GLabel 3750 2400 0    50   Input ~ 0
-~OUT_1_DRIVE~
+OUT_1_DRIVE
 Text GLabel 6200 2400 0    50   Input ~ 0
-~OUT_2_DRIVE~
+OUT_2_DRIVE
 Text GLabel 8650 2400 0    50   Input ~ 0
-~OUT_3_DRIVE~
+OUT_3_DRIVE
 Text GLabel 8650 4700 0    50   Input ~ 0
-~OUT_7_DRIVE~
+OUT_7_DRIVE
 Text GLabel 6200 4700 0    50   Input ~ 0
-~OUT_6_DRIVE~
+OUT_6_DRIVE
 Text GLabel 3750 4700 0    50   Input ~ 0
-~OUT_5_DRIVE~
+OUT_5_DRIVE
 Text GLabel 1300 4700 0    50   Input ~ 0
-~OUT_4_DRIVE~
+OUT_4_DRIVE
 $EndSCHEMATC
