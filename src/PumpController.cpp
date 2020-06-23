@@ -1,20 +1,45 @@
+#include "Config.h"
+#include "OutputController.h"
 #include "PumpController.h"
 
 #include <iostream>
 
-void PumpController::start()
+PumpController::PumpController(OutputController& outputController)
+    : _outputController(outputController)
+{}
+
+void PumpController::start(const uint8_t pump)
 {
-    std::cout << "starting pump" << std::endl;
-    _running = true;
+    if (pump >= Config::Pumps) {
+        _log.error("cannot start invalid pump: pump=%u", pump);
+        return;
+    }
+
+    _log.info("starting, pump=%u", pump);
+
+    _running[pump] = true;
+    _outputController.activate(Config::Pins::PumpOutputBase + pump);
 }
 
-void PumpController::stop()
+void PumpController::stop(const uint8_t pump)
 {
-    std::cout << "stop pumping" << std::endl;
-    _running = false;
+    if (pump >= Config::Pumps) {
+        _log.error("cannot stop invalid pump: pump=%u", pump);
+        return;
+    }
+
+    _log.info("stopping, pump=%u", pump);
+
+    _running[pump] = false;
+    _outputController.deactive(Config::Pins::PumpOutputBase + pump);
 }
 
-bool PumpController::isRunning() const
+bool PumpController::isRunning(const uint8_t pump) const
 {
-    return _running;
+    if (pump >= Config::Pumps) {
+        _log.error("cannot get state of invalid pump: pump=%u", pump);
+        return false;
+    }
+
+    return _running[pump];
 }

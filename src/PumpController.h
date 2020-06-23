@@ -1,16 +1,22 @@
 #pragma once
 
+#include "Config.h"
 #include "Logger.h"
+
+class OutputController;
 
 class PumpController
 {
 public:
-    void start();
-    void stop();
-    bool isRunning() const;
+    explicit PumpController(OutputController& outputController);
+
+    void start(uint8_t pump);
+    void stop(uint8_t pump);
+    bool isRunning(uint8_t pump) const;
 
 private:
     Logger _log{ "PumpController" };
-    bool _running = false;
+    OutputController _outputController;
+    bool _running[Config::Pumps] = { 0 };
 };
 

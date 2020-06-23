@@ -5,12 +5,10 @@
 #include <cstdint>
 #include <map>
 
-class Adafruit_MCP23008;
-
 class LedController
 {
 public:
-    explicit LedController(Adafruit_MCP23008& ioExpander);
+    explicit LedController();
 
     enum class Mode
     {
@@ -32,7 +30,6 @@ public:
 
 private:
     Logger _log{ "LedController" };
-    Adafruit_MCP23008& _ioExpander;
 
     struct LedState
     {

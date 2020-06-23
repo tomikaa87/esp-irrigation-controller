@@ -3,11 +3,14 @@
 
 IrrigationController::IrrigationController()
     : _waterTank(_settings)
-    , _ledController(_ioExpander)
+    , _pumpController(_outputController)
+    , _zoneController(_outputController)
 {
+    static_assert(Config::Pumps == 1, "Only 1 pump is supported right now");
+    static_assert(Config::Zones <= 6, "Only 6 zones supported");
+
     Drivers::I2C::init();
 
-    _ioExpander.begin(Config::SlaveAddresses::MCP23008);
     _settings.load();
     _zoneController.closeAll();
 
@@ -40,7 +43,7 @@ void IrrigationController::task()
 
 void IrrigationController::processPendingEvents()
 {
-    if (_state != State::Idle || !_scheduler.hasPendingEvents() || _pumpController.isRunning())
+    if (_state != State::Idle || !_scheduler.hasPendingEvents() || _pumpController.isRunning(0))
         return;
 
     const auto e = _scheduler.nextPendingEvent();
@@ -65,7 +68,7 @@ void IrrigationController::runStateMachine()
         case State::Starting:
             _zoneController.open(_activeZone);
             _flowSensor.reset();
-            _pumpController.start();
+            _pumpController.start(0);
             _flowErrorCount = 0;
             _state = State::Pumping;
             break;
@@ -82,7 +85,7 @@ void IrrigationController::runStateMachine()
                 if (_flowErrorCount > 3)
                 {
                     std::cout << "error: insufficient water flow detected, aborting" << std::endl;
-                    _pumpController.stop();
+                    _pumpController.stop(0);
                     _zoneController.closeAll();
                     const Decilitres pumpedAmount = _flowSensor.ticks() / _settings.data.flowSensor.ticksPerDecilitres;
                     _waterTank.use(pumpedAmount);
@@ -106,7 +109,7 @@ void IrrigationController::runStateMachine()
         case State::Stopping:
         {
             std::cout << "stopping the irrigation cycle" << std::endl;
-            _pumpController.stop();
+            _pumpController.stop(0);
             _zoneController.closeAll();
             const Decilitres pumpedAmount = _flowSensor.ticks() / _settings.data.flowSensor.ticksPerDecilitres;
             _waterTank.use(pumpedAmount);
@@ -130,6 +133,8 @@ bool IrrigationController::startManualIrrigation(const uint8_t zone)
     _manualIrrigation = true;
     _activeZone = zone;
     _state = State::Starting;
+
+    return true;
 }
 
 bool IrrigationController::stopIrrigation()
@@ -142,4 +147,6 @@ bool IrrigationController::stopIrrigation()
     _log.info("stopping irrigation");
 
     _state = State::Stopping;
+
+    return true;
 }

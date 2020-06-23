@@ -3,14 +3,13 @@
 #include "FlowSensor.h"
 #include "LedController.h"
 #include "Logger.h"
+#include "OutputController.h"
 #include "PumpController.h"
 #include "Scheduler.h"
 #include "Settings.h"
 #include "WaterTank.h"
 #include "WebServer.h"
 #include "ZoneController.h"
-
-#include <Adafruit_MCP23008.h>
 
 class IrrigationController
 {
@@ -21,13 +20,13 @@ public:
 
 private:
     Logger _log{ "IrrigationController" };
-    Adafruit_MCP23008 _ioExpander;
+    OutputController _outputController;
     Settings _settings;
     FlowSensor _flowSensor;
-    PumpController _pumpController;
-    Scheduler _scheduler;
-    ZoneController _zoneController;
     WaterTank _waterTank;
+    PumpController _pumpController;
+    ZoneController _zoneController;
+    Scheduler _scheduler;
     LedController _ledController;
     WebServer _webServer;
 
