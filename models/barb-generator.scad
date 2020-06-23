@@ -93,14 +93,16 @@ module port(
 }
 
 module adapter(
-    input_port_od = 12,
+    input_port_od = 11,
     input_port_id = 8.5,
-    input_port_h = 30,
+    input_port_h = 22,
+    input_port_barb_count = 2,
     output_port_count = 6,
-    output_port_od = 12,
+    output_port_od = 11,
     output_port_id = 8.5,
-    output_port_h = 30,
+    output_port_h = 22,
     output_port_spacing = 12,
+    output_port_barb_count = 2,
     vault_wall_th = 2
 ) {
     vault_w = width_of_output_ports(output_port_count, output_port_od, output_port_spacing);
@@ -124,7 +126,13 @@ module adapter(
 
         // Input port
         rotate([180, 0, 0]) translate([vault_w / 2, 0, -input_port_h]) {
-            port(input_port_h, 12, 8.5, barb_offset = 6, barb_count = 3);
+            port(
+                input_port_h,
+                input_port_od,
+                input_port_id,
+                barb_offset = input_port_h / 3,
+                barb_count = input_port_barb_count
+            );
         }
         
         // Output port(s)
@@ -135,8 +143,8 @@ module adapter(
                     output_port_h,
                     output_port_od,
                     output_port_id,
-                    barb_offset = 6,
-                    barb_count = 3
+                    barb_offset = output_port_h / 3,
+                    barb_count = output_port_barb_count
                 );
             }
         }

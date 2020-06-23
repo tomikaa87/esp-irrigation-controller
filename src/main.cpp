@@ -1,3 +1,5 @@
+#include "Config.h"
+
 #include <Arduino.h>
 
 #include <ESP8266WiFi.h>
@@ -23,7 +25,7 @@ void setup()
     Serial.begin(74880);
 
     Serial.println("Connecting to WiFi");
-    WiFi.begin("", "");
+    WiFi.begin(Config::WiFiSSID, Config::WiFiPassword);
 
     Serial.println("Setting up SPIFFS");
     SPIFFS.begin();
