@@ -10,19 +10,32 @@ IrrigationController::IrrigationController()
     _ioExpander.begin(Config::SlaveAddresses::MCP23008);
     _settings.load();
     _zoneController.closeAll();
+
+    _webServer.setZoneStartedHandler([this](const uint8_t zone) {
+        return startManualIrrigation(zone);
+    });
+
+    _webServer.setStopHandler([this] {
+        return stopIrrigation();
+    });
 }
 
 void IrrigationController::task()
 {
     _flowSensor.task();
+    _webServer.task();
 
-    if (_taskCallCount++ % 10 == 0)
-    {
-        _scheduler.task();
-        processPendingEvents();
+    if (millis() - _lastTaskCallMillis >= 100) {
+        _lastTaskCallMillis = millis();
+
+        if (_taskCallCount++ % 10 == 0)
+        {
+            _scheduler.task();
+            processPendingEvents();
+        }
+
+        runStateMachine();
     }
-
-    runStateMachine();
 }
 
 void IrrigationController::processPendingEvents()
@@ -82,7 +95,7 @@ void IrrigationController::runStateMachine()
 
             const Decilitres pumpedAmount = _flowSensor.ticks() / _settings.data.flowSensor.ticksPerDecilitres;
             std::cout << "pumping, pumpedAmount=" << pumpedAmount << std::endl;
-            if (pumpedAmount >= _requiredAmount)
+            if (!_manualIrrigation && pumpedAmount >= _requiredAmount)
             {
                 std::cout << "the required amount has been pumped out" << std::endl;
                 _state = State::Stopping;
@@ -98,7 +111,35 @@ void IrrigationController::runStateMachine()
             const Decilitres pumpedAmount = _flowSensor.ticks() / _settings.data.flowSensor.ticksPerDecilitres;
             _waterTank.use(pumpedAmount);
             _state = State::Idle;
+            _manualIrrigation = false;
             break;
         }
     }
+}
+
+
+bool IrrigationController::startManualIrrigation(const uint8_t zone)
+{
+    if (_state != State::Idle) {
+        _log.warning("cannot start irrigation, pump is active");
+        return false;
+    }
+
+    _log.info("starting manual irrigation: zone=%u", zone);
+
+    _manualIrrigation = true;
+    _activeZone = zone;
+    _state = State::Starting;
+}
+
+bool IrrigationController::stopIrrigation()
+{
+    if (_state != State::Pumping) {
+        _log.warning("cannot stop irrigation, pump is already idle");
+        return false;
+    }
+
+    _log.info("stopping irrigation");
+
+    _state = State::Stopping;
 }

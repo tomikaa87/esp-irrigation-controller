@@ -1,7 +1,27 @@
+#include "Config.h"
 #include "FlowSensor.h"
 
-#include <exception>
-#include <iostream>
+static FlowSensor* _flowSensorInstance = nullptr;
+
+//
+// Pin falling edge interrupt latency: 5us - 18us (5.5us - 6.3us avg)
+// FIXME: rising edge interrupt is buggy, IRS called continuously while the input is high
+//
+
+ICACHE_RAM_ATTR void _flowSensorIoIsr()
+{
+    if (_flowSensorInstance) {
+        _flowSensorInstance->onIoInterruptCalled();
+    }
+}
+
+FlowSensor::FlowSensor()
+{
+    _log.info("initializing GPIO input");
+
+    pinMode(Config::Pins::FlowSensorInput, INPUT);
+    attachInterrupt(Config::Pins::FlowSensorInput, _flowSensorIoIsr, FALLING);
+}
 
 std::size_t FlowSensor::ticks() const
 {
@@ -10,11 +30,14 @@ std::size_t FlowSensor::ticks() const
 
 void FlowSensor::reset()
 {
-    std::cout << "resetting flow sensor tick count" << std::endl;
+    _log.info("resetting flow sensor tick count");
 }
 
 void FlowSensor::task()
 {
-    if (_ticks < 300)
-        _ticks += 20;
+}
+
+ICACHE_RAM_ATTR void FlowSensor::onIoInterruptCalled()
+{
+    ++_ticks;
 }

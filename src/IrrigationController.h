@@ -7,6 +7,7 @@
 #include "Scheduler.h"
 #include "Settings.h"
 #include "WaterTank.h"
+#include "WebServer.h"
 #include "ZoneController.h"
 
 #include <Adafruit_MCP23008.h>
@@ -28,7 +29,9 @@ private:
     ZoneController _zoneController;
     WaterTank _waterTank;
     LedController _ledController;
+    WebServer _webServer;
 
+    int32_t _lastTaskCallMillis = 0;
     std::size_t _taskCallCount = 0;
 
     enum class State
@@ -44,8 +47,12 @@ private:
     uint8_t _activeZone = 0;
     std::size_t _lastFlowSensorTicks = 0;
     uint8_t _flowErrorCount = 0;
+    bool _manualIrrigation = false;
 
     void processPendingEvents();
     void runStateMachine();
+
+    bool startManualIrrigation(uint8_t zone);
+    bool stopIrrigation();
 };
 

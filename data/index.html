@@ -21,7 +21,7 @@
 
             function readStatus() {
                 console.log("Reading status");
-                $.ajax("/api/zone/status")
+                $.ajax("/api/status")
                     .done(result => {
                         $("#active-zone-label").text(result.activeZone > 0 ? result.activeZone : "None");
                         $("#tank-level-label").text(result.tankLevel > 0 ? `${Number(result.tankLevel).toFixed(2)} l` : "Empty");

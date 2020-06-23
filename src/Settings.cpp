@@ -10,7 +10,7 @@ void Settings::loadDefaults()
     data.tank.capacity = 360;
     data.tank.level = 100;
 
-    data.flowSensor.ticksPerDecilitres = 100;
+    data.flowSensor.ticksPerDecilitres = 3;
     data.flowSensor.errorDetectionTicks = 1;
 }
 
