@@ -1,5 +1,6 @@
-#include "EERAM.h"
 #include "Settings.h"
+
+#include "drivers/EERAM.h"
 
 #include <coredecls.h> // crc32()
 

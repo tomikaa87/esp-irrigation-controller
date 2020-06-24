@@ -1,5 +1,6 @@
 #include "IrrigationController.h"
-#include "SimpleI2C.h"
+
+#include "drivers/SimpleI2C.h"
 
 IrrigationController::IrrigationController()
     : _waterTank(_settings)
