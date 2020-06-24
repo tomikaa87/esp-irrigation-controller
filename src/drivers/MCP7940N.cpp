@@ -256,12 +256,6 @@ uint8_t MCP7940N::toBcd(uint8_t value)
 
 uint8_t MCP7940N::write(uint8_t address, const uint8_t* buffer, uint8_t length)
 {
-    Serial.printf("MCP7940N::write(%02xh,%ph,%u):", address, buffer, length);
-    for (auto i = 0; i < length; ++i) {
-        Serial.printf(" %02xh", buffer[i]);
-    }
-    Serial.println();
-
     if (!I2C::start(ControlByte, I2C::Operation::Write)) {
         _log.error("write() start error: cannot start transfer");
         return 0; // TODO use boolean return value
@@ -279,8 +273,6 @@ uint8_t MCP7940N::write(uint8_t address, const uint8_t* buffer, uint8_t length)
 
     I2C::end();
 
-    Serial.printf("MCP7940N::write: written=%u\n", length);
-
     return length; // TODO use boolean instead
 }
 
@@ -296,8 +288,6 @@ bool MCP7940N::write(const Register reg, uint8_t value)
 
 uint8_t MCP7940N::read(uint8_t address, uint8_t* buffer, uint8_t length)
 {
-    Serial.printf("MCP7940N::read(%02xh,%ph,%u)\n", address, buffer, length);
-
     if (!I2C::write(ControlByte, &address, sizeof(address))) {
         _log.error("read() write error: cannot start transfer");
         return 0;
@@ -307,18 +297,6 @@ uint8_t MCP7940N::read(uint8_t address, uint8_t* buffer, uint8_t length)
         _log.error("read() read error: cannot read data");
         return 0;
     }
-
-    // Wire.beginTransmission(ControlByte);
-    // Wire.write(address);
-    // Wire.endTransmission();
-    // const auto read = Wire.requestFrom(ControlByte, length);
-    // const auto buffered = Wire.readBytes(buffer, length);
-
-    Serial.printf("MCP7940N::read: read=%u, data:", length);
-        for (auto i = 0; i < length; ++i) {
-        Serial.printf(" %02xh", buffer[i]);
-    }
-    Serial.println();
 
     return length;
 }
