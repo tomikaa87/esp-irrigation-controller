@@ -9,15 +9,44 @@
 
 static std::unique_ptr<IrrigationController> irrigationController;
 
-void setup()
+void ICACHE_RAM_ATTR timer1Isr()
+{
+    if (irrigationController) {
+        irrigationController->epochTimerIsr();
+    }
+}
+
+void initializeEpochTimer()
+{
+    timer1_isr_init();
+    timer1_attachInterrupt(timer1Isr);
+    timer1_enable(TIM_DIV256, TIM_EDGE, TIM_LOOP);
+    timer1_write(100);
+}
+
+void initializeSerial()
 {
     Serial.begin(74880);
+}
 
+void initWiFi()
+{
     Serial.println("Connecting to WiFi");
     WiFi.begin(Config::WiFiSSID, Config::WiFiPassword);
+}
 
+void initFileSystem()
+{
     Serial.println("Setting up SPIFFS");
     SPIFFS.begin();
+}
+
+void setup()
+{
+    initializeEpochTimer();
+    initializeSerial();
+    initWiFi();
+    initFileSystem();
 
     irrigationController.reset(new IrrigationController);
 

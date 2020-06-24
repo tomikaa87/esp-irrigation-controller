@@ -4,6 +4,16 @@
 
 #include <coredecls.h> // crc32()
 
+Settings::Settings()
+{
+    _log.info("initializing");
+
+    // Disable ASE by default to avoid unnecessary wearing when settings are not changed
+    Drivers::EERAM::StatusReg sr;
+    sr.value = 0;
+    Drivers::EERAM::setStatus(sr);
+}
+
 void Settings::loadDefaults()
 {
     _log.info("loading default settings");

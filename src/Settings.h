@@ -56,6 +56,8 @@ public:
         {}
     } SETTINGS_PACKED;
 
+    Settings();
+
     void loadDefaults();
     void load();
     void save();

@@ -3,9 +3,12 @@
 #include "drivers/SimpleI2C.h"
 
 IrrigationController::IrrigationController()
-    : _waterTank(_settings)
+    : _ntpClient(_systemClock)
+    , _blynk(Config::BlynkAppToken)
+    , _waterTank(_settings)
     , _pumpController(_outputController)
     , _zoneController(_outputController)
+    , _otaUpdater("http://tomikaa.noip.me:8001/esp-irrigation-controller/update", _systemClock)
 {
     static_assert(Config::Pumps == 1, "Only 1 pump is supported right now");
     static_assert(Config::Zones <= 6, "Only 6 zones supported");
@@ -26,8 +29,12 @@ IrrigationController::IrrigationController()
 
 void IrrigationController::task()
 {
+    _systemClock.task();
     _flowSensor.task();
     _webServer.task();
+    _ntpClient.task();
+    _otaUpdater.task();
+    _blynk.task();
 
     if (millis() - _lastTaskCallMillis >= 100) {
         _lastTaskCallMillis = millis();
@@ -40,6 +47,27 @@ void IrrigationController::task()
 
         runStateMachine();
     }
+
+    // Slow loop
+    if (_lastSlowLoopUpdate == 0 || millis() - _lastSlowLoopUpdate >= SlowLoopUpdateIntervalMs) {
+        _lastSlowLoopUpdate = millis();
+
+        if (!_updateChecked && WiFi.isConnected() && millis() - _updateCheckTimer >= 5000) {
+            _updateChecked = true;
+            _otaUpdater.forceUpdate();
+        }
+    }
+
+    // Blynk update loop
+    if (_lastBlynkUpdate == 0 || millis() - _lastBlynkUpdate >= BlynkUpdateIntervalMs) {
+        _lastBlynkUpdate = millis();
+        updateBlynk();
+    }
+}
+
+void ICACHE_RAM_ATTR IrrigationController::epochTimerIsr()
+{
+    _systemClock.timerIsr();
 }
 
 void IrrigationController::processPendingEvents()
@@ -150,4 +178,9 @@ bool IrrigationController::stopIrrigation()
     _state = State::Stopping;
 
     return true;
+}
+
+void IrrigationController::updateBlynk()
+{
+
 }
