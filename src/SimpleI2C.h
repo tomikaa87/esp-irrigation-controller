@@ -78,6 +78,23 @@ public:
         return true;
     }
 
+    static bool write(const uint8_t data, const bool sendStopOnError = true)
+    {
+#ifdef SIMPLE_I2C_DEBUG
+        Serial.printf("<W:%u>", len);
+#endif
+
+        if (!writeByte(data)) {
+            if (sendStopOnError) {
+                writeStop();
+            }
+
+            return false;
+        }
+
+        return true;
+    }
+
     static void end(const bool sendStop = true)
     {
         if (sendStop) {
@@ -283,6 +300,6 @@ private:
     }
 };
 
-using I2C = SimpleI2C<4, 5, 400000>;
+using I2C = SimpleI2C<4, 5, 100000>;
 
 }

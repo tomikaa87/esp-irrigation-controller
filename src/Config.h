@@ -24,7 +24,7 @@ namespace Config
 
     namespace SlaveAddresses
     {
-        static constexpr auto MCP23008 = 0b00100000u; // [A2..A0] = 0b000
+        static constexpr auto MCP23008 = 0b000; // [A2..A0] = 0b000
     }
 
     namespace Pins
