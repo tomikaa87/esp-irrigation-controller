@@ -20,6 +20,8 @@
 
 #pragma once
 
+#include "Logger.h"
+
 #include <cstdint>
 
 namespace Drivers
@@ -152,6 +154,8 @@ public:
 
 private:
     static constexpr uint8_t ControlByte = 0b1101111;
+
+    static Logger _log;
 
     enum class Register : uint8_t
     {
