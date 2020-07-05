@@ -36,4 +36,11 @@ namespace Config
         static constexpr auto ZoneOutputBase = 0;
         static constexpr auto PumpOutputBase = 6;
     }
+
+    namespace Pump
+    {
+        static constexpr int32_t PumpRampUpTimeMs = 2000;
+        static constexpr int32_t LeakCheckLengthMs = 5000;
+        static constexpr int32_t FlowSensorCheckIntervalMs = 1000;
+    }
 }

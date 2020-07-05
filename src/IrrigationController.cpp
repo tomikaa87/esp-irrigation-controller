@@ -2,13 +2,17 @@
 
 #include "drivers/SimpleI2C.h"
 
+#include <algorithm>
+
 IrrigationController::IrrigationController()
     : _ntpClient(_systemClock)
     , _blynk(Config::BlynkAppToken)
     , _waterTank(_settings)
-    , _pumpController(_outputController)
     , _zoneController(_outputController)
     , _otaUpdater("http://tomikaa.noip.me:8001/esp-irrigation-controller/update", _systemClock)
+    , _pumpUnits{
+        PumpUnit{ Pump{ 0, { 0, 1, 2, 3, 4, 5, 6 }, _flowSensor, _outputController, _zoneController, _settings } }
+    }
 {
     static_assert(Config::Pumps == 1, "Only 1 pump is supported right now");
     static_assert(Config::Zones <= 6, "Only 6 zones supported");
@@ -23,7 +27,8 @@ IrrigationController::IrrigationController()
     });
 
     _webServer.setStopHandler([this] {
-        return stopIrrigation();
+        stopIrrigation();
+        return true;
     });
 }
 
@@ -36,6 +41,8 @@ void IrrigationController::task()
     _otaUpdater.task();
     _blynk.task();
 
+    processTasks();
+
     if (millis() - _lastTaskCallMillis >= 100) {
         _lastTaskCallMillis = millis();
 
@@ -44,8 +51,6 @@ void IrrigationController::task()
             _scheduler.task();
             processPendingEvents();
         }
-
-        runStateMachine();
     }
 
     // Slow loop
@@ -70,114 +75,65 @@ void ICACHE_RAM_ATTR IrrigationController::epochTimerIsr()
     _systemClock.timerIsr();
 }
 
-void IrrigationController::processPendingEvents()
+void IrrigationController::processTasks()
 {
-    if (_state != State::Idle || !_scheduler.hasPendingEvents() || _pumpController.isRunning(0))
-        return;
-
-    const auto e = _scheduler.nextPendingEvent();
-
-    std::cout << "starting irrigation, amount=" << e.amount << ", zone=" << static_cast<int>(e.zone) << std::endl;
-
-    _requiredAmount = e.amount;
-    _activeZone = e.zone;
-    _state = State::Starting;
-}
-
-void IrrigationController::runStateMachine()
-{
-    switch (_state)
-    {
-        case State::Idle:
-            break;
-
-        case State::Error:
-            break;
-
-        case State::Starting:
-            _zoneController.open(_activeZone);
-            _flowSensor.reset();
-            _pumpController.start(0);
-            _flowErrorCount = 0;
-            _state = State::Pumping;
-            break;
-
-        case State::Pumping:
-        {
-            if (_lastFlowSensorTicks + _settings.data.flowSensor.errorDetectionTicks >= _flowSensor.ticks())
-            {
-                ++_flowErrorCount;
-
-                std::cout << "insufficient water flow detected, errorCount=" << static_cast<int>(_flowErrorCount) << std::endl;
-                std::cout << "lastFlowSensorTicks=" << _lastFlowSensorTicks << std::endl;
-
-                if (_flowErrorCount > 3)
-                {
-                    std::cout << "error: insufficient water flow detected, aborting" << std::endl;
-                    _pumpController.stop(0);
-                    _zoneController.closeAll();
-                    const Decilitres pumpedAmount = _flowSensor.ticks() / _settings.data.flowSensor.ticksPerDecilitres;
-                    _waterTank.use(pumpedAmount);
-                    _state = State::Error;
-                    break;
-                }
-            }
-
-            _lastFlowSensorTicks = _flowSensor.ticks();
-
-            const Decilitres pumpedAmount = _flowSensor.ticks() / _settings.data.flowSensor.ticksPerDecilitres;
-            std::cout << "pumping, pumpedAmount=" << pumpedAmount << std::endl;
-            if (!_manualIrrigation && pumpedAmount >= _requiredAmount)
-            {
-                std::cout << "the required amount has been pumped out" << std::endl;
-                _state = State::Stopping;
-            }
-            break;
+    for (auto& unit : _pumpUnits) {
+        if (unit.taskQueue.empty() || unit.pump.isRunning()) {
+            continue;
         }
 
-        case State::Stopping:
-        {
-            std::cout << "stopping the irrigation cycle" << std::endl;
-            _pumpController.stop(0);
-            _zoneController.closeAll();
-            const Decilitres pumpedAmount = _flowSensor.ticks() / _settings.data.flowSensor.ticksPerDecilitres;
-            _waterTank.use(pumpedAmount);
-            _state = State::Idle;
-            _manualIrrigation = false;
-            break;
+        const auto task = unit.taskQueue.front();
+        unit.taskQueue.pop();
+
+        _log.debug("executing next task: pump=%d, zone=%u, amount=%u dl", unit.pump.id(), task.zone, task.amount);
+
+        if (!unit.pump.start(task.zone, task.amount)) {
+            _log.error("can't start pumping");
         }
     }
 }
 
+void IrrigationController::processPendingEvents()
+{
+    const auto event = _scheduler.nextPendingEvent();
+
+    _log.debug("loading scheduler event zone=%u, amount=%u", event.amount, event.zone);
+
+    enqueueTask(event.amount, event.zone);
+}
+
+bool IrrigationController::enqueueTask(const uint8_t zone, const Decilitres amount, const bool manual)
+{
+    auto pumpForZone = std::find_if(
+        _pumpUnits.begin(),
+        _pumpUnits.end(),
+        [zone](const PumpUnit& unit) { return unit.pump.containsZone(zone); }
+    );
+
+    if (pumpForZone == _pumpUnits.end()) {
+        _log.error("can't find pump for zone %u", zone);
+        return false;
+    }
+
+    _log.debug("creating pump task: zone=%u, amount=%u, manual=%s",
+        zone, amount, manual ? "yes" : "no"
+    );
+
+    pumpForZone->taskQueue.emplace(PumpUnit::Task{ zone, amount, manual });
+
+    return true;
+}
 
 bool IrrigationController::startManualIrrigation(const uint8_t zone)
 {
-    if (_state != State::Idle) {
-        _log.warning("cannot start irrigation, pump is active");
-        return false;
-    }
-
-    _log.info("starting manual irrigation: zone=%u", zone);
-
-    _manualIrrigation = true;
-    _activeZone = zone;
-    _state = State::Starting;
-
-    return true;
+    return enqueueTask(zone, 0);
 }
 
-bool IrrigationController::stopIrrigation()
+void IrrigationController::stopIrrigation()
 {
-    if (_state != State::Pumping) {
-        _log.warning("cannot stop irrigation, pump is already idle");
-        return false;
+    for (auto& unit : _pumpUnits) {
+        unit.pump.stop();
     }
-
-    _log.info("stopping irrigation");
-
-    _state = State::Stopping;
-
-    return true;
 }
 
 void IrrigationController::updateBlynk()

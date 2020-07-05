@@ -4,7 +4,7 @@
 #include "LedController.h"
 #include "Logger.h"
 #include "OutputController.h"
-#include "PumpController.h"
+#include "Pump.h"
 #include "Scheduler.h"
 #include "Settings.h"
 #include "SystemClock.h"
@@ -15,6 +15,8 @@
 #include "network/BlynkHandler.h"
 #include "network/NtpClient.h"
 #include "network/OtaUpdater.h"
+
+#include <queue>
 
 class IrrigationController
 {
@@ -33,30 +35,37 @@ private:
     Settings _settings;
     FlowSensor _flowSensor;
     WaterTank _waterTank;
-    PumpController _pumpController;
     ZoneController _zoneController;
     Scheduler _scheduler;
     LedController _ledController;
     WebServer _webServer;
     OtaUpdater _otaUpdater;
 
+    struct PumpUnit {
+        struct Task {
+            uint8_t zone = 0;
+            Decilitres amount = 0;
+            bool manual = false;
+
+            Task(const uint8_t zone, const Decilitres amount, const bool manual = false)
+                : zone(zone)
+                , amount(amount)
+                , manual(manual)
+            {}
+        };
+
+        explicit PumpUnit(Pump pump)
+            : pump(std::move(pump))
+        {}
+
+        Pump pump;
+        std::queue<Task> taskQueue;
+    };
+
+    std::vector<PumpUnit> _pumpUnits;
+
     int32_t _lastTaskCallMillis = 0;
     std::size_t _taskCallCount = 0;
-
-    enum class State
-    {
-        Idle,
-        Starting,
-        Pumping,
-        Stopping,
-        Error
-    } _state = State::Idle;
-
-    Decilitres _requiredAmount = 0;
-    uint8_t _activeZone = 0;
-    std::size_t _lastFlowSensorTicks = 0;
-    uint8_t _flowErrorCount = 0;
-    bool _manualIrrigation = false;
 
     bool _updateChecked = false;
     uint32_t _updateCheckTimer = 0;
@@ -67,11 +76,13 @@ private:
     static constexpr auto BlynkUpdateIntervalMs = 1000;
     uint32_t _lastBlynkUpdate = 0;
 
+    void processTasks();
     void processPendingEvents();
-    void runStateMachine();
+
+    bool enqueueTask(uint8_t zone, Decilitres amount, bool manual = false);
 
     bool startManualIrrigation(uint8_t zone);
-    bool stopIrrigation();
+    void stopIrrigation();
 
     void updateBlynk();
 };

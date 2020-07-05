@@ -13,6 +13,13 @@ void ZoneController::open(const uint8_t zone)
     _outputController.activate(Config::Pins::ZoneOutputBase + zone);
 }
 
+void ZoneController::close(const uint8_t zone)
+{
+    _log.info("closing zone: zone=%u", zone);
+
+    _outputController.deactive(Config::Pins::ZoneOutputBase + zone);
+}
+
 void ZoneController::closeAll()
 {
     _log.info("closing all zones");

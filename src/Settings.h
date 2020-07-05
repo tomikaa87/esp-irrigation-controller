@@ -10,24 +10,25 @@
 class Settings
 {
 public:
-    struct Tank
+    struct TankSettings
     {
         Decilitres capacity = 0;
         Decilitres level = 0;
     } SETTINGS_PACKED;
 
-    struct FlowSensor
+    struct FlowSensorSettings
     {
         uint16_t ticksPerDecilitres = 0;
         uint16_t errorDetectionTicks = 0;
+        uint16_t leakCheckDetectionTicks = 0;
     } SETTINGS_PACKED;
 
     struct Data
     {
         uint32_t checksum = 0;
 
-        Tank tank;
-        FlowSensor flowSensor;
+        TankSettings tank;
+        FlowSensorSettings flowSensor;
     } SETTINGS_PACKED data;
 
     struct SchedulerDataHeader
