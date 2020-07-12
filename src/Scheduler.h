@@ -13,6 +13,8 @@
 
 #include <iostream>
 
+class SystemClock;
+
 class Scheduler
 {
 public:
@@ -37,7 +39,7 @@ public:
         {}
     };
 
-    Scheduler();
+    Scheduler(const SystemClock& systemClock);
 
     bool hasPendingEvents() const
     {
@@ -55,46 +57,10 @@ public:
 
 private:
     Logger _log{ "Scheduler" };
+    const SystemClock& _systemClock;
     std::queue<PendingEvent> _pendingEvents;
     std::vector<StoredEvent> _storedEvents;
+
+    void logStoredEvent(const StoredEvent& e) const;
+    void logPendingEvent(const PendingEvent& e) const;
 };
-
-inline std::ostream& operator<<(std::ostream& s, const Scheduler::StoredEvent& e)
-{
-    s << "StoredEvent{ ";
-
-    s << "zones=";
-    for (uint8_t i = 0; i < e.zones.size(); ++i)
-    {
-        if (e.zones.test(i))
-            s << static_cast<int>(i) << ",";
-    }
-
-    s << " minutesFromMidnight=" << e.minutesFromMidnight;
-
-    s << " days=";
-    for (uint8_t i = 0; i < e.days.size(); ++i)
-    {
-        static const char* Days[] = { "SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT" };
-        if (e.days.test(i))
-            s << Days[i] << ",";
-    }
-
-    s << " amount=" << e.amount
-        << ", active=" << e.active
-        << ", executed=" << e.executed;
-
-    s << " }";
-
-    return s;
-}
-
-inline std::ostream& operator<<(std::ostream& s, const Scheduler::PendingEvent& e)
-{
-    s << "PendingEvent{ "
-        << "amount=" << e.amount
-        << ", zone=" << static_cast<int>(e.zone)
-        << " }";
-
-    return s;
-}

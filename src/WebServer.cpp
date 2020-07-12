@@ -2,6 +2,7 @@
 #include "WebServer.h"
 
 #include <FS.h>
+#include <vector>
 
 WebServer::WebServer(const int port)
     : _server(port)
@@ -24,6 +25,8 @@ WebServer::WebServer(const int port)
     _server.on("/api/zone/stop", [this] { onApiStop(); });
 
     _server.on("/api/status", [this] { onApiStatus(); });
+
+    _server.on("/api/scheduler/add", [this] { onSchedulerApiAdd(); });
 
     _server.begin();
 }
@@ -90,4 +93,21 @@ void WebServer::onApiStatus()
 
     // TODO
     _server.send(200, "application/json", R"({"activeZone":null,"tankLevel":0,"firmwareVersion":"0.0.0"})");
+}
+
+void WebServer::onSchedulerApiAdd()
+{
+    if (_server.method() != HTTPMethod::HTTP_POST) {
+        _server.send(405);
+        return;
+    }
+
+    const auto body = nlohmann::json::parse(_server.arg(0).c_str());
+
+    std::vector<SchedulerApiController::Event> events;
+    const auto result = _schedulerApiController.parseInputJson(body, events);
+
+    if (result != SchedulerApiController::ParseResult::Ok) {
+        _server.send(400, "text/plain", SchedulerApiController::toString(result));
+    }
 }

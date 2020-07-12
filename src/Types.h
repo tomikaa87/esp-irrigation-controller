@@ -4,7 +4,6 @@
 
 #include <bitset>
 #include <cstdint>
-#include <iostream>
 
 using Decilitres = int32_t;
 using MinutesFromMidnight = uint16_t;

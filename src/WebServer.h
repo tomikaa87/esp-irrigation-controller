@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Logger.h"
+#include "SchedulerApiController.h"
 
 #include <functional>
 
@@ -27,7 +28,11 @@ private:
     ZoneStartedHandler _zoneStartedHandler;
     StopHandler _stopHandler;
 
+    SchedulerApiController _schedulerApiController;
+
     void onApiZoneStart(uint8_t zone);
     void onApiStop();
     void onApiStatus();
+
+    void onSchedulerApiAdd();
 };

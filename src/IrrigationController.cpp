@@ -9,6 +9,7 @@ IrrigationController::IrrigationController()
     , _blynk(Config::BlynkAppToken)
     , _waterTank(_settings)
     , _zoneController(_outputController)
+    , _scheduler(_systemClock)
     , _otaUpdater("http://tomikaa.noip.me:8001/esp-irrigation-controller/update", _systemClock)
     , _pumpUnits{
         PumpUnit{ Pump{ 0, { 0, 1, 2, 3, 4, 5, 6 }, _flowSensor, _outputController, _zoneController, _settings } }

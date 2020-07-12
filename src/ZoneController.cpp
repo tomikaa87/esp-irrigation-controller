@@ -24,7 +24,7 @@ void ZoneController::closeAll()
 {
     _log.info("closing all zones");
 
-    for (auto i = 0; i < Config::Zones; ++i) {
+    for (auto i = 0u; i < Config::Zones; ++i) {
         _outputController.deactive(Config::Pins::ZoneOutputBase + i);
     }
 }
