@@ -64,7 +64,9 @@ module port(
     barb_th = 2,
     barb_offset = 5,
     barb_count = 3,
-    slope_ratio = 0.15
+    slope_ratio = 0.15,
+    base_ring_h = 4,
+    base_ring_th = 3
 ) {
     difference() {
         union() {
@@ -84,6 +86,11 @@ module port(
                     }
                 }
             }
+        
+            // Make thick base ring to stenghten the port
+            translate([0, 0, 0]) {
+                cylinder(h = base_ring_h, d = outer_d + base_ring_th, $fn = 60);
+            }
         }
         
         translate([0, 0, -0.01]) {
@@ -93,15 +100,15 @@ module port(
 }
 
 module adapter(
-    input_port_od = 11,
-    input_port_id = 8.5,
+    input_port_od = 13,
+    input_port_id = 9,
     input_port_h = 22,
     input_port_barb_count = 2,
     output_port_count = 6,
-    output_port_od = 11,
-    output_port_id = 8.5,
+    output_port_od = 13,
+    output_port_id = 9,
     output_port_h = 22,
-    output_port_spacing = 12,
+    output_port_spacing = 13,
     output_port_barb_count = 2,
     vault_wall_th = 2
 ) {
@@ -152,3 +159,19 @@ module adapter(
 }
 
 adapter();
+
+/*
+    Parameters for 1x6 splitter
+
+    input_port_od = 13,
+    input_port_id = 9,
+    input_port_h = 22,
+    input_port_barb_count = 2,
+    output_port_count = 6,
+    output_port_od = 13,
+    output_port_id = 9,
+    output_port_h = 22,
+    output_port_spacing = 13,
+    output_port_barb_count = 2,
+    vault_wall_th = 2
+*/
