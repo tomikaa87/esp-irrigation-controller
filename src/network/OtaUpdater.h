@@ -49,7 +49,7 @@ private:
     State _state = State::Idle;
 
     std::time_t _lastCheckedForUpdates = 0;
-    std::time_t _updateCheckIntervalSeconds = 60 * 60;
+    std::time_t _updateCheckIntervalSeconds = 60;
     std::time_t _rebootTimestamp = 0;
     std::time_t _requestStartTimestamp = 0;
     bool _forceUpdateCheck = false;

@@ -72,7 +72,7 @@ private:
 
     void runStateMachine();
     void startIrrigation();
-    void stopIrrigation();
+    void stopIrrigation(bool leakCheck = true);
     void checkIrrigationState();
     void checkRampUpState();
     void checkLeaking();

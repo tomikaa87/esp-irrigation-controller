@@ -66,8 +66,8 @@ void Pump::stop()
 {
     _log.warning("manual stop requested");
 
-    _outputController.deactive(Config::Pins::PumpOutputBase + _id);
-    _zoneController.close(_requestedZone);
+    // Stop without leak checking
+    stopIrrigation(false);
 }
 
 bool Pump::containsZone(const uint8_t zone) const
@@ -166,7 +166,7 @@ void Pump::startIrrigation()
     changeState(State::RampingUp);
 }
 
-void Pump::stopIrrigation()
+void Pump::stopIrrigation(const bool leakCheck)
 {
     _log.info("stopping irrigation");
 
@@ -176,12 +176,18 @@ void Pump::stopIrrigation()
     _log.debug("closing zone");
     _zoneController.close(_requestedZone);
 
-    _lastCheckTimestamp = millis();
-    _lastFlowSensorTicks = _flowSensor.ticks();
+    if (leakCheck) {
+        _lastCheckTimestamp = millis();
+        _lastFlowSensorTicks = _flowSensor.ticks();
 
-    _log.debug("checking leaks for %u ms", Config::Pump::LeakCheckLengthMs);
+        _log.debug("checking leaks for %u ms", Config::Pump::LeakCheckLengthMs);
 
-    changeState(State::CheckLeaking);
+        changeState(State::CheckLeaking);
+    } else {
+        _log.info("stopping without leak checking");
+
+        changeState(State::Idle);
+    }
 }
 
 void Pump::checkIrrigationState()

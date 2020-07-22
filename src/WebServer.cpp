@@ -1,4 +1,5 @@
 #include "Config.h"
+#include "FirmwareVersion.h"
 #include "WebServer.h"
 
 #include <FS.h>
@@ -91,8 +92,19 @@ void WebServer::onApiStatus()
 {
     _log.info("status requested");
 
+    static const auto fwVer =
+        std::to_string(FW_VER_MAJOR) + "."
+        + std::to_string(FW_VER_MINOR) + "."
+        + std::to_string(FW_VER_PATCH);
+
+    auto payload = nlohmann::json{
+        { "activeZone", 0 },
+        { "tankLevel", 0 },
+        { "firmwareVersion", fwVer }
+    };
+
     // TODO
-    _server.send(200, "application/json", R"({"activeZone":null,"tankLevel":0,"firmwareVersion":"0.0.0"})");
+    _server.send(200, "application/json", payload.dump().c_str());
 }
 
 void WebServer::onSchedulerApiAdd()

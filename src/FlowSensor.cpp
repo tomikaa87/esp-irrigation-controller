@@ -5,7 +5,7 @@ static FlowSensor* _flowSensorInstance = nullptr;
 
 //
 // Pin falling edge interrupt latency: 5us - 18us (5.5us - 6.3us avg)
-// FIXME: rising edge interrupt is buggy, IRS called continuously while the input is high
+// FIXME: rising edge interrupt is buggy, ISR called continuously while the input is high
 //
 
 ICACHE_RAM_ATTR void _flowSensorIoIsr()

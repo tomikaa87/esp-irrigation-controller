@@ -7,7 +7,6 @@
 namespace Config
 {
     static constexpr auto Zones = 6u;
-    static constexpr auto Pumps = 1u;
 
     namespace EeramAddresses
     {

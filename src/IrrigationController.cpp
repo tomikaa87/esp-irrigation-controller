@@ -12,10 +12,9 @@ IrrigationController::IrrigationController()
     , _scheduler(_systemClock)
     , _otaUpdater("http://tomikaa.noip.me:8001/esp-irrigation-controller/update", _systemClock)
     , _pumpUnits{
-        PumpUnit{ Pump{ 0, { 0, 1, 2, 3, 4, 5, 6 }, _flowSensor, _outputController, _zoneController, _settings } }
+        PumpUnit{ Pump{ 0, { 0, 1, 2, 3, 4, 5 }, _flowSensor, _outputController, _zoneController, _settings } }
     }
 {
-    static_assert(Config::Pumps == 1, "Only 1 pump is supported right now");
     static_assert(Config::Zones <= 6, "Only 6 zones supported");
 
     Drivers::I2C::init();
@@ -41,6 +40,10 @@ void IrrigationController::task()
     _ntpClient.task();
     _otaUpdater.task();
     _blynk.task();
+
+    for (auto& unit : _pumpUnits) {
+        unit.pump.task();
+    }
 
     processTasks();
 
@@ -96,6 +99,10 @@ void IrrigationController::processTasks()
 
 void IrrigationController::processPendingEvents()
 {
+    if (!_scheduler.hasPendingEvents()) {
+        return;
+    }
+
     const auto event = _scheduler.nextPendingEvent();
 
     _log.debug("loading scheduler event zone=%u, amount=%u", event.amount, event.zone);
@@ -127,7 +134,7 @@ bool IrrigationController::enqueueTask(const uint8_t zone, const Decilitres amou
 
 bool IrrigationController::startManualIrrigation(const uint8_t zone)
 {
-    return enqueueTask(zone, 0);
+    return enqueueTask(zone, 0, true);
 }
 
 void IrrigationController::stopIrrigation()

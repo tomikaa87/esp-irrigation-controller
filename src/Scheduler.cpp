@@ -4,15 +4,6 @@
 Scheduler::Scheduler(const SystemClock& systemClock)
     : _systemClock(systemClock)
 {
-    StoredEvent e;
-    e.amount = 15;
-    //e.zones.set(0);
-    e.zones.set(2);
-    e.days.set(2);
-    e.minutesFromMidnight = 17 * 60 + 49;
-    e.active = true;
-
-    _storedEvents.push_back(e);
 }
 
 void Scheduler::task()
