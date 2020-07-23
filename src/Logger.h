@@ -1,12 +1,20 @@
 #pragma once
 
+#include "Config.h"
+
 #include <string>
 
 #include <Arduino.h>
+#include <StreamString.h>
+#include <WiFiUdp.h>
+
+class SystemClock;
 
 class Logger
 {
 public:
+    static void setup(const SystemClock& systemClock);
+
     explicit Logger(std::string category);
 
     enum class Severity
@@ -20,19 +28,28 @@ public:
     template <typename... Params>
     void log(Severity severity, const char* fmt, Params... params) const
     {
+        StreamString ss;
+
         if (!_inBlock) {
-            Serial.printf("[%c][%s]: ", severityIndicator(severity), _category.c_str());
+            ss.printf("[%c][%s]: ", severityIndicator(severity), _category.c_str());
         }
 
         if (sizeof...(params) == 0) {
-            Serial.print(fmt);
+            ss.print(fmt);
         } else {
-            Serial.printf(fmt, params...);
+            ss.printf(fmt, params...);
         }
 
-        if (!_inBlock) {
-            Serial.println();
+        if (Config::Network::SyslogEnabled && _p) {
+            _p->sendToSyslogServer(Config::Network::SyslogHostName, ss.c_str());
         }
+
+        // Print new line after sending the message to Syslog server
+        if (!_inBlock) {
+            ss.println();
+        }
+
+        Serial.print(ss);
     }
 
     template <typename... Params>
@@ -80,12 +97,20 @@ public:
     {
         _inBlock = true;
 
-        Serial.printf("[%c][%s]: ", severityIndicator(severity), _category.c_str());
+        StreamString ss;
+
+        ss.printf("[%c][%s]: ", severityIndicator(severity), _category.c_str());
 
         if (sizeof...(params) == 0) {
-            Serial.print(fmt);
+            ss.print(fmt);
         } else {
-            Serial.printf(fmt, params...);
+            ss.printf(fmt, params...);
+        }
+
+        Serial.print(ss);
+
+        if (Config::Network::SyslogEnabled && _p) {
+            _p->sendToSyslogServer(Config::Network::SyslogHostName, ss.c_str());
         }
 
         return Block{ _inBlock };
@@ -100,6 +125,25 @@ public:
 private:
     const std::string _category;
     mutable bool _inBlock = false;
+
+    struct Private
+    {
+        Private(const SystemClock& systemClock)
+            : systemClock(systemClock)
+        {}
+
+        WiFiUDP udp;
+        const SystemClock& systemClock;
+
+        void sendToSyslogServer(
+            const char* hostName,
+            const char* message,
+            const char* procId = "-",
+            const char* msgid = "-"
+        );
+    };
+
+    static Private* _p;
 
     static char severityIndicator(Severity severity);
 };
