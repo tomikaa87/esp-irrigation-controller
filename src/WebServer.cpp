@@ -95,7 +95,9 @@ void WebServer::onApiStop()
 
 void WebServer::onApiStatus()
 {
+#if 0
     _log.info("status requested");
+#endif
 
     static const auto fwVer =
         std::to_string(FW_VER_MAJOR) + "."
