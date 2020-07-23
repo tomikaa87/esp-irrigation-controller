@@ -20,12 +20,20 @@ void OtaUpdater::task()
 {
     switch (_state) {
         case State::Idle:
-            if ((_lastCheckedForUpdates > 0 && _systemClock.utcTime() - _lastCheckedForUpdates >= _updateCheckIntervalSeconds)
+            if ((/*_lastCheckedForUpdates > 0 && */_systemClock.utcTime() - _lastCheckedForUpdates >= _updateCheckIntervalSeconds)
                     || _forceUpdateCheck) {
                 _log.info("checking for updates");
 
                 _state = State::GetAvailableVersion;
                 _forceUpdateCheck = false;
+
+                _lastCheckedForUpdates = _systemClock.utcTime();
+
+                if (!WiFi.isConnected()) {
+                    _log.warning("cannot check for updates, WiFi is not connected");
+                    _state = State::Idle;
+                    break;
+                }
 
                 if (_updateStateChangedHandler) {
                     _updateStateChangedHandler(UpdateState::CheckingForUpdate);
