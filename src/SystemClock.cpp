@@ -43,7 +43,7 @@ SystemClock::SystemClock()
 
     // Enable square wave output on MFP pin
     rtc::setOutputConfig(rtc::OutputConfig::SquareWave);
-    rtc::setSquareWaveOutputFrequency(rtc::SquareWaveFrequency::Output32768Hz);
+    rtc::setSquareWaveOutputFrequency(rtc::SquareWaveFrequency::Output4096Hz);
 
     updateFromRtc();
 }
