@@ -7,10 +7,15 @@
 
 #include <ESP8266WebServer.h>
 
+class FlowSensor;
+
 class WebServer
 {
 public:
-    WebServer(int port = 80);
+    WebServer(
+        FlowSensor& flowSensor,
+        int port = 80
+    );
 
     using ZoneStartedHandler = std::function<bool(uint8_t zone)>;
     void setZoneStartedHandler(ZoneStartedHandler&& handler);
@@ -22,6 +27,7 @@ public:
 
 private:
     Logger _log{ "WebServer" };
+    FlowSensor& _flowSensor;
 
     ESP8266WebServer _server;
 

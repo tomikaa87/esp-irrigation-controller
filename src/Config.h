@@ -8,6 +8,8 @@ namespace Config
 {
     static constexpr auto Zones = 6u;
 
+    // Temporary
+    static constexpr auto FlowSensorTicksPerDecilitre = 46; // 463/l
     namespace EeramAddresses
     {
         static constexpr auto EeramSize = 16384u;
@@ -29,7 +31,7 @@ namespace Config
     namespace Pins
     {
         // WeMos D1 Pins
-        static constexpr auto FlowSensorInput = D0;
+        static constexpr auto FlowSensorInput = D5;
 
         // MCP23008 Pins
         static constexpr auto ZoneOutputBase = 0;

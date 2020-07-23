@@ -202,7 +202,8 @@ void Pump::checkIrrigationState()
     _lastFlowSensorTicks = flowSensorTicks;
     _log.debug("flow sensor ticks delta: %u", flowSensorTicksDelta);
 
-    const auto totalAmount = static_cast<double>(flowSensorTicks) / _settings.data.flowSensor.ticksPerDecilitres;
+    // FIXME use TicksPerDecilitre from Settings
+    const auto totalAmount = static_cast<double>(flowSensorTicks) / Config::FlowSensorTicksPerDecilitre; // _settings.data.flowSensor.ticksPerDecilitres;
     _log.debug("total amount: %u", totalAmount);
 
     const auto remainingAmount = _requestedAmount - totalAmount;

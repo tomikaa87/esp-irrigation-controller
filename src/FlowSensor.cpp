@@ -21,6 +21,13 @@ FlowSensor::FlowSensor()
 
     pinMode(Config::Pins::FlowSensorInput, INPUT);
     attachInterrupt(Config::Pins::FlowSensorInput, _flowSensorIoIsr, FALLING);
+
+    _flowSensorInstance = this;
+}
+
+FlowSensor::~FlowSensor()
+{
+    _flowSensorInstance = nullptr;
 }
 
 std::size_t FlowSensor::ticks() const

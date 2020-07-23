@@ -8,6 +8,7 @@ class FlowSensor
 {
 public:
     FlowSensor();
+    ~FlowSensor();
 
     std::size_t ticks() const;
     void reset();
