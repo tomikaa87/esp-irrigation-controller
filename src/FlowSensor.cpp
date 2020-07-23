@@ -42,6 +42,16 @@ void FlowSensor::reset()
 
 void FlowSensor::task()
 {
+    static int32_t ts = 0;
+    static decltype(_ticks) lastTicks = 0;
+
+    const auto delta = _ticks - lastTicks;
+
+    if (delta > 0 && millis() - ts > 1000) {
+        ts = millis();
+        _log.debug("ticks=%u, delta=%u", _ticks, delta);
+        lastTicks = _ticks;
+    }
 }
 
 ICACHE_RAM_ATTR void FlowSensor::onIoInterruptCalled()
