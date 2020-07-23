@@ -41,6 +41,10 @@ SystemClock::SystemClock()
         _log.warning("RTC oscillator has stopped");
     }
 
+    // Enable square wave output on MFP pin
+    rtc::setOutputConfig(rtc::OutputConfig::SquareWave);
+    rtc::setSquareWaveOutputFrequency(rtc::SquareWaveFrequency::Output32768Hz);
+
     updateFromRtc();
 }
 

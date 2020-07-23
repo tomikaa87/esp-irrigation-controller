@@ -41,6 +41,11 @@ void initFileSystem()
     SPIFFS.begin();
 }
 
+#include "drivers/SimpleI2C.h"
+#include "drivers/MCP7940N.h"
+
+using rtc = Drivers::MCP7940N;
+
 void setup()
 {
     initializeEpochTimer();
@@ -49,6 +54,9 @@ void setup()
     initFileSystem();
 
     irrigationController.reset(new IrrigationController);
+
+    // FMeasured = 8194, FIdeal = 8192, TRIMVAL = -240
+    // rtc::setDigitalTrimming(240 >> 1);
 
     Serial.println("Initialization finished");
 }

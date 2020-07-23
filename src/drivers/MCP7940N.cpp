@@ -188,6 +188,7 @@ void MCP7940N::setSquareWaveOutputFrequency(SquareWaveFrequency frequency)
     uint8_t value = read(Register::CONTROL);
     value &= ~(0b11);
     value |= static_cast<uint8_t>(frequency) & 0b11;
+    write(Register::CONTROL, value);
 }
 
 void MCP7940N::writeGpo(bool high)
