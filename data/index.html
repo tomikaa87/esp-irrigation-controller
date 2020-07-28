@@ -26,6 +26,8 @@
                         $("#active-zone-label").text(result.activeZone > 0 ? result.activeZone : "None");
                         $("#tank-level-label").text(result.tankLevel > 0 ? `${Number(result.tankLevel).toFixed(2)} l` : "Empty");
                         $("#fw-version-label").text(result.firmwareVersion);
+                        $("#fs-version-label").text(result.fsVersion);
+                        $("#fls-ticks-label").text(result.flowSensor.ticks);
                     });
             }
 
@@ -213,7 +215,10 @@
                 <div class="status-label">Active zone: <span class="status-label value-label" id="active-zone-label">None</span></div>
                 <div class="status-label">Tank level: <span class="status-label value-label" id="tank-level-label">None</span></div>
                 <hr>
-                <div class="status-label">Firmware version: <span class="status-label value-label" id="fw-version-label">0.0.0</span></div>
+                <div class="status-label">Firmware version: <span class="status-label value-label" id="fw-version-label">-.-.-</span></div>
+                <div class="status-label">FS version: <span class="status-label value-label" id="fs-version-label">-.-.-</span></div>
+                <hr>
+                <div class="status-label">Flow sensor ticks: <span class="status-label value-label" id="fls-ticks-label">-</span></div>
             </div>
         </div>
     </body>

@@ -2,6 +2,8 @@
 
 #include "drivers/SimpleI2C.h"
 
+#include <ArduinoOTA.h>
+
 #include <algorithm>
 
 IrrigationController::IrrigationController()
@@ -34,6 +36,8 @@ IrrigationController::IrrigationController()
         stopIrrigation();
         return true;
     });
+
+    setupArduinoOta();
 }
 
 void IrrigationController::task()
@@ -44,6 +48,8 @@ void IrrigationController::task()
     _ntpClient.task();
     _otaUpdater.task();
     _blynk.task();
+
+    ArduinoOTA.handle();
 
     for (auto& unit : _pumpUnits) {
         unit.pump.task();
@@ -151,4 +157,53 @@ void IrrigationController::stopIrrigation()
 void IrrigationController::updateBlynk()
 {
 
+}
+
+void IrrigationController::setupArduinoOta()
+{
+    ArduinoOTA.onStart([this] {
+        _webServer.shutdown();
+
+        auto type = "";
+        if (ArduinoOTA.getCommand() == U_FLASH) {
+            type = "flash";
+        } else { // U_FS
+            type = "file system";
+        }
+
+        _log.info("ArduinoOTA: starting update, type=%s", type);
+    });
+
+    ArduinoOTA.onEnd([this] {
+        _log.info("ArduinoOTA: finished");
+    });
+
+    ArduinoOTA.onError([this](const ota_error_t error) {
+        auto errorStr = "unknown error";
+        switch (error) {
+            case OTA_AUTH_ERROR:
+                errorStr = "authentication error";
+                break;
+
+            case OTA_BEGIN_ERROR:
+                errorStr = "begin failed";
+                break;
+
+            case OTA_CONNECT_ERROR:
+                errorStr = "connect failed";
+                break;
+
+            case OTA_END_ERROR:
+                errorStr = "end failed";
+                break;
+
+            case OTA_RECEIVE_ERROR:
+                errorStr = "receive failed";
+                break;
+        }
+
+        _log.error("ArduinoOTA: update failed, error: %s", errorStr);
+    });
+
+    ArduinoOTA.begin();
 }

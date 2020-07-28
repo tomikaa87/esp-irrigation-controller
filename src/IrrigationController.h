@@ -85,5 +85,7 @@ private:
     void stopIrrigation();
 
     void updateBlynk();
+
+    void setupArduinoOta();
 };
 

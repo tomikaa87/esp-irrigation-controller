@@ -47,8 +47,26 @@ void WebServer::setStopHandler(StopHandler&& handler)
     _stopHandler = std::move(handler);
 }
 
+void WebServer::shutdown()
+{
+    if (_shutdown) {
+        return;
+    }
+
+    _log.info("shutting down");
+
+    _server.close();
+    SPIFFS.end();
+
+    _shutdown = true;
+}
+
 void WebServer::task()
 {
+    if (_shutdown) {
+        return;
+    }
+
     _server.handleClient();
 }
 

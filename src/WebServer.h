@@ -23,6 +23,8 @@ public:
     using StopHandler = std::function<bool()>;
     void setStopHandler(StopHandler&& handler);
 
+    void shutdown();
+
     void task();
 
 private:
@@ -35,6 +37,8 @@ private:
     StopHandler _stopHandler;
 
     SchedulerApiController _schedulerApiController;
+
+    bool _shutdown = false;
 
     void onApiZoneStart(uint8_t zone);
     void onApiStop();
