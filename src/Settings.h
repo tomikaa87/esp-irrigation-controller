@@ -12,15 +12,20 @@ class Settings
 public:
     struct TankSettings
     {
-        Decilitres capacity = 0;
+        Decilitres capacity = 1500;
         Decilitres level = 0;
     } SETTINGS_PACKED;
 
     struct FlowSensorSettings
     {
-        uint16_t ticksPerDecilitres = 0;
-        uint16_t errorDetectionTicks = 0;
+        uint16_t ticksPerDecilitres = 46;
+        uint16_t errorDetectionTicksDelta = 10;
         uint16_t leakCheckDetectionTicks = 0;
+    } SETTINGS_PACKED;
+
+    struct BlynkSettings
+    {
+        Decilitres amounts[Config::Zones] = { 0 };
     } SETTINGS_PACKED;
 
     struct Data
@@ -29,6 +34,7 @@ public:
 
         TankSettings tank;
         FlowSensorSettings flowSensor;
+        BlynkSettings blynk;
     } SETTINGS_PACKED data;
 
     struct SchedulerDataHeader

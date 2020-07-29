@@ -35,6 +35,11 @@ namespace Config
     // Temporary
     static constexpr auto FlowSensorTicksPerDecilitre = 46; // 463/l
 
+    namespace Blynk
+    {
+        static constexpr auto SettingsSaveTimeoutMs = 2000;
+    }
+
     namespace Network
     {
         static constexpr auto WebServerPort = 80;

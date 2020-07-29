@@ -6,6 +6,11 @@
 
 Settings::Settings()
 {
+    static_assert(
+        sizeof(Data) <= Config::EeramAddresses::SchedulerDataBase - Config::EeramAddresses::SettingsBase,
+        "Settings data doesn't fit in the allocated space"
+    );
+
     _log.info("initializing");
 
     // Disable ASE by default to avoid unnecessary wearing when settings are not changed
@@ -18,11 +23,7 @@ void Settings::loadDefaults()
 {
     _log.info("loading default settings");
 
-    data.tank.capacity = 360;
-    data.tank.level = 100;
-
-    data.flowSensor.ticksPerDecilitres = 3;
-    data.flowSensor.errorDetectionTicks = 1;
+    data = {};
 }
 
 void Settings::load()

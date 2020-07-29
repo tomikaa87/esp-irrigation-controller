@@ -28,11 +28,12 @@
 #include <functional>
 
 class BlynkParam;
+class Settings;
 
 class BlynkHandler
 {
 public:
-    BlynkHandler(const char* appToken);
+    BlynkHandler(const char* appToken, Settings& settings);
     ~BlynkHandler();
 
     void task();
@@ -63,10 +64,10 @@ public:
 
 private:
     Logger _log{ "Blynk" };
+    Settings& _settings;
 
     struct Zone {
         bool selected = false;
-        Decilitres amount = 0;
     };
 
     std::array<Zone, Config::Zones> _zones;
@@ -74,8 +75,13 @@ private:
     size_t _lastFlowSensorTicks = 0;
     bool _controlsEnabled = true;
 
+    bool _settingsChanged = false;
+    int32_t _settingsSaveTimer = 0;
+
     StartHandler _startHandler;
     StopHandler _stopHandler;
+
+    void saveSettingsDeferred();
 
     size_t virtualPinToZoneIndex(const int pin);
 

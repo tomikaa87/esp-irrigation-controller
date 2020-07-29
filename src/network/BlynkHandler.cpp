@@ -19,6 +19,7 @@
 */
 
 #include "BlynkHandler.h"
+#include "Settings.h"
 
 #define ENABLE_DEBUG
 
@@ -100,7 +101,11 @@ HANDLE_BLYNK_READ(PIN_ZONE5_SELECT)
 
 static WidgetTerminal gs_terminal{ V64 };
 
-BlynkHandler::BlynkHandler(const char* appToken)
+BlynkHandler::BlynkHandler(
+    const char* appToken,
+    Settings& settings
+)
+    : _settings(settings)
 {
     g_blynkHandler = this;
     Blynk.config(appToken, "blynk-server.home", 8080);
@@ -114,6 +119,11 @@ BlynkHandler::~BlynkHandler()
 void BlynkHandler::task()
 {
     Blynk.run();
+
+    if (_settingsChanged && millis() - _settingsSaveTimer > Config::Blynk::SettingsSaveTimeoutMs) {
+        _settingsChanged = false;
+        _settings.save();
+    }
 }
 
 void BlynkHandler::onBlynkConnected()
@@ -137,8 +147,10 @@ void BlynkHandler::onVirtualPinUpdated(int pin, const BlynkParam& param)
         const auto zoneIdx = virtualPinToZoneIndex(pin);
         auto& zone = _zones[zoneIdx];
         // Value is clamped
-        zone.amount = std::min(100, std::max(static_cast<Decilitres>(param.asFloat() * 10), 0));
-        _log.debug("amount changed, zone=%u, amount=%u", zoneIdx, zone.amount);
+        const auto amount = std::min(100, std::max(static_cast<Decilitres>(param.asFloat() * 10), 0));
+        _log.debug("amount changed, zone=%u, amount=%u", zoneIdx, amount);
+        _settings.data.blynk.amounts[zoneIdx] = amount;
+        saveSettingsDeferred();
     } else if (pin >= PIN_ZONE0_SELECT && pin <= PIN_ZONE5_SELECT) {
         const auto zoneIdx = virtualPinToZoneIndex(pin);
         auto& zone = _zones[zoneIdx];
@@ -172,8 +184,7 @@ void BlynkHandler::updateVirtualPin(int pin)
 
     if (pin >= PIN_ZONE0_AMOUNT && pin <= PIN_ZONE5_AMOUNT) {
         const auto zoneIdx = virtualPinToZoneIndex(pin);
-        auto& zone = _zones[zoneIdx];
-        Blynk.virtualWrite(pin, zone.amount);
+        Blynk.virtualWrite(pin, _settings.data.blynk.amounts[zoneIdx]);
         return;
     }
 
@@ -226,7 +237,7 @@ void BlynkHandler::resetSelectors()
     }
 
     for (auto pin = PIN_ZONE0_AMOUNT, zone = 0; pin <= PIN_ZONE5_AMOUNT; ++pin, ++zone) {
-        Blynk.virtualWrite(pin, _zones[zone].amount / 10.0);
+        Blynk.virtualWrite(pin, _settings.data.blynk.amounts[zone] / 10.0);
     }
 }
 
@@ -244,6 +255,12 @@ void BlynkHandler::setStartHandler(StartHandler&& handler)
 void BlynkHandler::setStopHandler(StopHandler&& handler)
 {
     _stopHandler = std::move(handler);
+}
+
+void BlynkHandler::saveSettingsDeferred()
+{
+    _settingsChanged = true;
+    _settingsSaveTimer = millis();
 }
 
 size_t BlynkHandler::virtualPinToZoneIndex(const int pin)
@@ -278,10 +295,12 @@ void BlynkHandler::onStartButtonPressed()
 
         zone.selected = false;
 
-        _log.debug("starting selected zone, index=%u, amount=%u", i, zone.amount);
+        const auto amount = _settings.data.blynk.amounts[i];
+
+        _log.debug("starting selected zone, index=%u, amount=%u", i, amount);
 
         StartedZone sz;
-        sz.amount = zone.amount;
+        sz.amount = amount;
         sz.zone = i;
 
         zones.push_back(std::move(sz));

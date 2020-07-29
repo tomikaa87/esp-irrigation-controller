@@ -8,7 +8,7 @@
 
 IrrigationController::IrrigationController()
     : _ntpClient(_systemClock)
-    , _blynk(Config::BlynkAppToken)
+    , _blynk(Config::BlynkAppToken, _settings)
     , _waterTank(_settings)
     , _zoneController(_outputController)
     , _scheduler(_systemClock)
