@@ -33,6 +33,10 @@ public:
 
     bool containsZone(uint8_t zone) const;
     bool isRunning() const;
+    Decilitres pumpedAmount() const;
+    Decilitres remainingAmount() const;
+    uint8_t activeZone() const;
+    bool isManual() const;
 
     using LeakDetectedHandler = std::function<void()>;
     void setLeakDetectedHandler(LeakDetectedHandler&& handler);

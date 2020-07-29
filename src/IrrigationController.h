@@ -76,6 +76,8 @@ private:
     static constexpr auto BlynkUpdateIntervalMs = 1000;
     uint32_t _lastBlynkUpdate = 0;
 
+    bool _startedFromBlynk = false;
+
     void processTasks();
     void processPendingEvents();
 
@@ -84,7 +86,10 @@ private:
     bool startManualIrrigation(uint8_t zone);
     void stopIrrigation();
 
+    void setupBlynk();
+
     void updateBlynk();
+    void updateBlynkStatus();
 
     void setupArduinoOta();
 };

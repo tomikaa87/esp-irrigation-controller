@@ -38,6 +38,7 @@ IrrigationController::IrrigationController()
     });
 
     setupArduinoOta();
+    setupBlynk();
 }
 
 void IrrigationController::task()
@@ -81,6 +82,7 @@ void IrrigationController::task()
     if (_lastBlynkUpdate == 0 || millis() - _lastBlynkUpdate >= BlynkUpdateIntervalMs) {
         _lastBlynkUpdate = millis();
         updateBlynk();
+        updateBlynkStatus();
     }
 }
 
@@ -91,7 +93,13 @@ void ICACHE_RAM_ATTR IrrigationController::epochTimerIsr()
 
 void IrrigationController::processTasks()
 {
+    bool idle = true;
+
     for (auto& unit : _pumpUnits) {
+        if (!unit.taskQueue.empty() || unit.pump.isRunning()) {
+            idle = false;
+        }
+
         if (unit.taskQueue.empty() || unit.pump.isRunning()) {
             continue;
         }
@@ -104,6 +112,12 @@ void IrrigationController::processTasks()
         if (!unit.pump.start(task.zone, task.amount)) {
             _log.error("can't start pumping");
         }
+    }
+
+    if (_startedFromBlynk && idle) {
+        _startedFromBlynk = false;
+        _blynk.setControlsEnabled(true);
+        _blynk.resetSelectors();
     }
 }
 
@@ -154,9 +168,61 @@ void IrrigationController::stopIrrigation()
     }
 }
 
+void IrrigationController::setupBlynk()
+{
+    _blynk.setStartHandler([this](const std::vector<BlynkHandler::StartedZone>& zones) {
+        _blynk.setControlsEnabled(false);
+        _startedFromBlynk = true;
+
+        for (const auto& z : zones) {
+            enqueueTask(z.zone, z.amount);
+        }
+    });
+
+    _blynk.setStopHandler([this] {
+        stopIrrigation();
+        _blynk.setControlsEnabled(true);
+        _startedFromBlynk = false;
+    });
+}
+
 void IrrigationController::updateBlynk()
 {
+    _blynk.setFlowSensorTicks(_flowSensor.ticks());
+}
 
+void IrrigationController::updateBlynkStatus()
+{
+    std::string s;
+    s.reserve(30);
+
+    bool hasRunningPump = false;
+    for (const auto& pu : _pumpUnits) {
+        if (!pu.pump.isRunning()) {
+            continue;
+        }
+
+        hasRunningPump = true;
+
+        if (!s.empty()) {
+            s += ", ";
+        } else {
+            s += "Pumping: ";
+        }
+
+        s += "zone " + std::to_string(pu.pump.activeZone() + 1);
+        if (pu.pump.isManual()) {
+            s += " (manual)";
+        } else {
+            s += " (" + std::to_string(pu.pump.remainingAmount()) + " dl)";
+        }
+    }
+
+    if (!hasRunningPump) {
+        s = "Idle";
+    }
+
+    _blynk.setStatusText(s);
 }
 
 void IrrigationController::setupArduinoOta()

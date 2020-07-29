@@ -22,9 +22,10 @@
 
 #include "Logger.h"
 #include "TrackedVariable.h"
+#include "Types.h"
 
+#include <cstdint>
 #include <functional>
-#include <stdint.h>
 
 class BlynkParam;
 
@@ -41,40 +42,45 @@ public:
     void onButtonPressed(int pin);
     void updateVirtualPin(int pin);
 
-    // void updateActiveTemperature(float celsius);
-    // void updateDaytimeTemperature(float celsius);
-    // void updateNightTimeTemperature(float celsius);
-    // void updateCurrentTemperature(float celsius);
-    // void updateIsBoostActive(bool active);
-    // void updateIsHeatingActive(bool active);
-    // void updateBoostRemaining(uint32_t secs);
-    // void updateMode(uint8_t mode);
-    // void updateNextSwitch(uint8_t state, uint8_t weekday, uint8_t hour, uint8_t minute);
+    void setStatusText(const std::string& s);
+    void setFlowSensorTicks(size_t ticks);
+
+    void setControlsEnabled(bool enabled);
+    void resetSelectors();
 
     void terminalPrintln(const char* msg);
+
+    struct StartedZone {
+        Decilitres amount = 0;
+        uint8_t zone = 0;
+    };
+
+    using StartHandler = std::function<void(const std::vector<StartedZone>& zones)>;
+    using StopHandler = std::function<void()>;
+
+    void setStartHandler(StartHandler&& handler);
+    void setStopHandler(StopHandler&& handler);
 
 private:
     Logger _log{ "Blynk" };
 
-    bool m_callIncrementTempCb = false;
-    bool m_callDecrementTempCb = false;
-    bool m_callActivateBoostCb = false;
-    bool m_callDeactivateBoostCb = false;
+    struct Zone {
+        bool selected = false;
+        Decilitres amount = 0;
+    };
 
-    float m_currentTemperature = 0;
+    std::array<Zone, Config::Zones> _zones;
+    std::string _lastStatusText;
+    size_t _lastFlowSensorTicks = 0;
+    bool _controlsEnabled = true;
 
-    bool m_boostActive = false;
-    bool m_heatingActive = false;
+    StartHandler _startHandler;
+    StopHandler _stopHandler;
 
-    TrackedVariable<uint8_t> m_mode = 0xff;
-    TrackedVariable<float> m_targetTemperature = 0;
-    TrackedVariable<float> m_daytimeTemperature = 0;
-    TrackedVariable<float> m_nightTimeTemperature = 0;
+    size_t virtualPinToZoneIndex(const int pin);
 
-    uint32_t m_boostRemainingSecs = 0xffffffff;
-
-    void processButtonCallbackRequests();
-    void processValueUpdates();
+    void onStartButtonPressed();
+    void onStopButtonPressed();
 
     template <typename T, int size>
     inline void floatToStr(const float f, T(&buf)[size]);

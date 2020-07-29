@@ -51,32 +51,54 @@ BLYNK_CONNECTED()
         g_blynkHandler->onBlynkConnected();
 }
 
-// #define PIN_INCREMENT_TEMP              V1
-// #define PIN_DECREMENT_TEMP              V2
-// #define PIN_ACTIVATE_BOOST              V3
-// #define PIN_DEACTIVATE_BOOST            V4
+#define PIN_ZONE0_AMOUNT                V10
+#define PIN_ZONE0_SELECT                V16
+#define PIN_ZONE1_AMOUNT                V11
+#define PIN_ZONE1_SELECT                V17
+#define PIN_ZONE2_AMOUNT                V12
+#define PIN_ZONE2_SELECT                V18
+#define PIN_ZONE3_AMOUNT                V13
+#define PIN_ZONE3_SELECT                V19
+#define PIN_ZONE4_AMOUNT                V14
+#define PIN_ZONE4_SELECT                V20
+#define PIN_ZONE5_AMOUNT                V15
+#define PIN_ZONE5_SELECT                V21
+#define PIN_START_BUTTON                V22
+#define PIN_STOP_BUTTON                 V23
+#define PIN_STATUS_LABEL                V24
+#define PIN_FLS_TICKS_LABEL             V25
+#define PIN_FLS_TICKS_RESET_BUTTON      V26
 
-// #define PIN_TARGET_TEMPERATURE          V127
-// #define PIN_DAYTIME_TEMPERATURE         V126
-// #define PIN_NIGHT_TIME_TEMPERATURE      V125
-// #define PIN_BOOST_STATE                 V124
-// #define PIN_CURRENT_TEMPERATURE         V123
-// #define PIN_HEATING_STATE               V122
-// #define PIN_BOOST_REMAINING_SECS        V121
-// #define PIN_MODE_SELECTOR               V120
+HANDLE_BLYNK_BUTTON_PRESS(PIN_START_BUTTON)
+HANDLE_BLYNK_BUTTON_PRESS(PIN_STOP_BUTTON)
+HANDLE_BLYNK_BUTTON_PRESS(PIN_FLS_TICKS_RESET_BUTTON)
 
-// #define PIN_NEXT_SWITCH_LABEL           V119
-// #define PIN_NEXT_SWITCH_TIME_LABEL      V118
+HANDLE_BLYNK_WRITE(PIN_ZONE0_AMOUNT)
+HANDLE_BLYNK_WRITE(PIN_ZONE1_AMOUNT)
+HANDLE_BLYNK_WRITE(PIN_ZONE2_AMOUNT)
+HANDLE_BLYNK_WRITE(PIN_ZONE3_AMOUNT)
+HANDLE_BLYNK_WRITE(PIN_ZONE4_AMOUNT)
+HANDLE_BLYNK_WRITE(PIN_ZONE5_AMOUNT)
+HANDLE_BLYNK_WRITE(PIN_ZONE0_SELECT)
+HANDLE_BLYNK_WRITE(PIN_ZONE1_SELECT)
+HANDLE_BLYNK_WRITE(PIN_ZONE2_SELECT)
+HANDLE_BLYNK_WRITE(PIN_ZONE3_SELECT)
+HANDLE_BLYNK_WRITE(PIN_ZONE4_SELECT)
+HANDLE_BLYNK_WRITE(PIN_ZONE5_SELECT)
 
-// HANDLE_BLYNK_BUTTON_PRESS(PIN_INCREMENT_TEMP)
-// HANDLE_BLYNK_BUTTON_PRESS(PIN_DECREMENT_TEMP)
-// HANDLE_BLYNK_BUTTON_PRESS(PIN_ACTIVATE_BOOST)
-// HANDLE_BLYNK_BUTTON_PRESS(PIN_DEACTIVATE_BOOST)
+HANDLE_BLYNK_READ(PIN_ZONE0_AMOUNT)
+HANDLE_BLYNK_READ(PIN_ZONE1_AMOUNT)
+HANDLE_BLYNK_READ(PIN_ZONE2_AMOUNT)
+HANDLE_BLYNK_READ(PIN_ZONE3_AMOUNT)
+HANDLE_BLYNK_READ(PIN_ZONE4_AMOUNT)
+HANDLE_BLYNK_READ(PIN_ZONE5_AMOUNT)
+HANDLE_BLYNK_READ(PIN_ZONE0_SELECT)
+HANDLE_BLYNK_READ(PIN_ZONE1_SELECT)
+HANDLE_BLYNK_READ(PIN_ZONE2_SELECT)
+HANDLE_BLYNK_READ(PIN_ZONE3_SELECT)
+HANDLE_BLYNK_READ(PIN_ZONE4_SELECT)
+HANDLE_BLYNK_READ(PIN_ZONE5_SELECT)
 
-// HANDLE_BLYNK_WRITE(PIN_MODE_SELECTOR)
-// HANDLE_BLYNK_WRITE(PIN_NIGHT_TIME_TEMPERATURE)
-// HANDLE_BLYNK_WRITE(PIN_DAYTIME_TEMPERATURE)
-// HANDLE_BLYNK_WRITE(PIN_TARGET_TEMPERATURE)
 
 static WidgetTerminal gs_terminal{ V64 };
 
@@ -94,17 +116,13 @@ BlynkHandler::~BlynkHandler()
 void BlynkHandler::task()
 {
     Blynk.run();
-    processValueUpdates();
-    processButtonCallbackRequests();
 }
 
 void BlynkHandler::onBlynkConnected()
 {
     _log.debug("connected");
 
-    // // LEDs must be updated manually
-    // updateVirtualPin(PIN_BOOST_STATE);
-    // updateVirtualPin(PIN_HEATING_STATE);
+    resetSelectors();
 }
 
 void BlynkHandler::onVirtualPinUpdated(int pin, const BlynkParam& param)
@@ -117,26 +135,17 @@ void BlynkHandler::onVirtualPinUpdated(int pin, const BlynkParam& param)
     // This callback should run as short as possible
     // to avoid Blynk disconnect errors
 
-    switch (pin)
-    {
-        // case PIN_MODE_SELECTOR:
-        //     m_mode = param.asInt() - 1;
-        //     break;
-
-        // case PIN_TARGET_TEMPERATURE:
-        //     m_targetTemperature = param.asFloat();
-        //     break;
-
-        // case PIN_NIGHT_TIME_TEMPERATURE:
-        //     m_nightTimeTemperature = param.asFloat();
-        //     break;
-
-        // case PIN_DAYTIME_TEMPERATURE:
-        //     m_daytimeTemperature = param.asFloat();
-        //     break;
-
-        default:
-            break;
+    if (pin >= PIN_ZONE0_AMOUNT && pin <= PIN_ZONE5_AMOUNT) {
+        const auto zoneIdx = virtualPinToZoneIndex(pin);
+        auto& zone = _zones[zoneIdx];
+        // Value is clamped
+        zone.amount = std::min(100, std::max(static_cast<Decilitres>(param.asFloat() * 10), 0));
+        _log.debug("amount changed, zone=%u, amount=%u", zoneIdx, zone.amount);
+    } else if (pin >= PIN_ZONE0_SELECT && pin <= PIN_ZONE5_SELECT) {
+        const auto zoneIdx = virtualPinToZoneIndex(pin);
+        auto& zone = _zones[zoneIdx];
+        zone.selected = param.asInt() > 0;
+        _log.debug("selection changed, zone=%u, selected=%u", zoneIdx, zone.selected);
     }
 }
 
@@ -145,23 +154,14 @@ void BlynkHandler::onButtonPressed(int pin)
     // This callback should run as short as possible
     // to avoid Blynk disconnect errors
 
-    switch (pin)
-    {
-        // case PIN_INCREMENT_TEMP:
-        //     m_callIncrementTempCb = true;
-        //     break;
+    switch (pin) {
+        case PIN_START_BUTTON:
+            onStartButtonPressed();
+            break;
 
-        // case PIN_DECREMENT_TEMP:
-        //     m_callDecrementTempCb = true;
-        //     break;
-
-        // case PIN_ACTIVATE_BOOST:
-        //     m_callActivateBoostCb = true;
-        //     break;
-
-        // case PIN_DEACTIVATE_BOOST:
-        //     m_callDeactivateBoostCb = true;
-        //     break;
+        case PIN_STOP_BUTTON:
+            onStopButtonPressed();
+            break;
 
         default:
             break;
@@ -172,140 +172,65 @@ void BlynkHandler::updateVirtualPin(int pin)
 {
     _log.debug("updating virtual pin: %d", pin);
 
-    char buf[10] = { 0 };
+    if (pin >= PIN_ZONE0_AMOUNT && pin <= PIN_ZONE5_AMOUNT) {
+        const auto zoneIdx = virtualPinToZoneIndex(pin);
+        auto& zone = _zones[zoneIdx];
+        Blynk.virtualWrite(pin, zone.amount);
+        return;
+    }
 
-    switch (pin)
-    {
-        // case PIN_TARGET_TEMPERATURE:
-        //     floatToStr(m_targetTemperature, buf);
-        //     Blynk.virtualWrite(pin, buf);
-        //     break;
+    if (pin >= PIN_ZONE0_SELECT && pin <= PIN_ZONE5_SELECT) {
+        const auto zoneIdx = virtualPinToZoneIndex(pin);
+        auto& zone = _zones[zoneIdx];
+        Blynk.virtualWrite(pin, zone.selected ? 1 : 0);
+        return;
+    }
 
-        // case PIN_DAYTIME_TEMPERATURE:
-        //     floatToStr(m_daytimeTemperature, buf);
-        //     Blynk.virtualWrite(pin, buf);
-        //     break;
+    switch (pin) {
+        case PIN_STATUS_LABEL:
+            Blynk.virtualWrite(pin, _lastStatusText.c_str());
+            break;
 
-        // case PIN_NIGHT_TIME_TEMPERATURE:
-        //     floatToStr(m_nightTimeTemperature, buf);
-        //     Blynk.virtualWrite(pin, buf);
-        //     break;
-
-        // case PIN_BOOST_STATE:
-        //     Blynk.virtualWrite(PIN_BOOST_STATE, m_boostActive ? 255 : 0);
-        //     break;
-
-        // case PIN_CURRENT_TEMPERATURE:
-        //     floatToStr(m_currentTemperature, buf);
-        //     Blynk.virtualWrite(PIN_CURRENT_TEMPERATURE, buf);
-        //     break;
-
-        // case PIN_HEATING_STATE:
-        //     Blynk.virtualWrite(PIN_HEATING_STATE, m_heatingActive ? 255 : 0);
-        //     break;
-
-        // case PIN_BOOST_REMAINING_SECS:
-        // {
-        //     int minutes = m_boostRemainingSecs / 60;
-        //     int secs = m_boostRemainingSecs - minutes * 60;
-
-        //     snprintf(buf, sizeof(buf), "%d:%02d", minutes, secs);
-
-        //     Blynk.virtualWrite(PIN_BOOST_REMAINING_SECS, buf);
-        //     break;
-        // }
-
-        // case PIN_MODE_SELECTOR:
-        //     Blynk.virtualWrite(PIN_MODE_SELECTOR, m_mode + 1);
-        //     break;
+        case PIN_FLS_TICKS_LABEL:
+            Blynk.virtualWrite(pin, _lastFlowSensorTicks);
+            break;
 
         default:
             break;
     }
 }
 
-// void BlynkHandler::updateActiveTemperature(float celsius)
-// {
-//     m_targetTemperature = celsius;
-//     if (m_targetTemperature.changed())
-//         updateVirtualPin(PIN_TARGET_TEMPERATURE);
-// }
+void BlynkHandler::setStatusText(const std::string& s)
+{
+    Blynk.virtualWrite(PIN_STATUS_LABEL, s.c_str());
+    _lastStatusText = s;
+}
 
-// void BlynkHandler::updateDaytimeTemperature(float celsius)
-// {
-//     m_daytimeTemperature = celsius;
-//     if (m_daytimeTemperature.changed())
-//         updateVirtualPin(PIN_DAYTIME_TEMPERATURE);
-// }
+void BlynkHandler::setFlowSensorTicks(const size_t ticks)
+{
+    Blynk.virtualWrite(PIN_FLS_TICKS_LABEL, ticks);
+    _lastFlowSensorTicks = ticks;
+}
 
-// void BlynkHandler::updateNightTimeTemperature(float celsius)
-// {
-//     m_nightTimeTemperature = celsius;
-//     if (m_nightTimeTemperature.changed())
-//         updateVirtualPin(PIN_NIGHT_TIME_TEMPERATURE);
-// }
+void BlynkHandler::setControlsEnabled(const bool enabled)
+{
+    _log.debug("setting controls %s", enabled ? "enabled" : "disabled");
+    _controlsEnabled = enabled;
+}
 
-// void BlynkHandler::updateCurrentTemperature(float celsius)
-// {
-//     if (m_currentTemperature == celsius)
-//         return;
+void BlynkHandler::resetSelectors()
+{
+    _log.debug("resetting zone selectors");
 
-//     m_currentTemperature = celsius;
-//     updateVirtualPin(PIN_CURRENT_TEMPERATURE);
-// }
+    for (auto pin = PIN_ZONE0_SELECT, zone = 0; pin <= PIN_ZONE5_SELECT; ++pin, ++zone) {
+        Blynk.virtualWrite(pin, 0);
+        _zones[zone].selected = 0;
+    }
 
-// void BlynkHandler::updateIsBoostActive(bool active)
-// {
-//     if (m_boostActive == active)
-//         return;
-
-//     m_boostActive = active;
-//     updateVirtualPin(PIN_BOOST_STATE);
-// }
-
-// void BlynkHandler::updateIsHeatingActive(bool active)
-// {
-//     if (m_heatingActive == active)
-//         return;
-
-//     m_heatingActive = active;
-//     updateVirtualPin(PIN_HEATING_STATE);
-// }
-
-// void BlynkHandler::updateBoostRemaining(uint32_t secs)
-// {
-//     if (m_boostRemainingSecs == secs)
-//         return;
-
-//     m_boostRemainingSecs = secs;
-//     updateVirtualPin(PIN_BOOST_REMAINING_SECS);
-// }
-
-// void BlynkHandler::updateMode(uint8_t mode)
-// {
-//     m_mode = mode;
-//     if (m_mode.changed())
-//         updateVirtualPin(PIN_MODE_SELECTOR);
-// }
-
-// void BlynkHandler::updateNextSwitch(uint8_t state, uint8_t weekday, uint8_t hour, uint8_t minute)
-// {
-//     if (state > 1 || weekday > 6 || hour > 23 || minute > 59)
-//     {
-//         Blynk.virtualWrite(PIN_NEXT_SWITCH_LABEL, "--");
-//         Blynk.virtualWrite(PIN_NEXT_SWITCH_TIME_LABEL, "--- --:--");
-//     }
-//     else
-//     {
-//         char buf[16] = { 0 };
-//         static const char Weekdays[7][4] = { "SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT" };
-
-//         snprintf(buf, sizeof(buf), "%s %2d:%02d", Weekdays[weekday], hour, minute);
-
-//         Blynk.virtualWrite(PIN_NEXT_SWITCH_LABEL, state == 0 ? "OFF" : "ON");
-//         Blynk.virtualWrite(PIN_NEXT_SWITCH_TIME_LABEL, buf);
-//     }
-// }
+    for (auto pin = PIN_ZONE0_AMOUNT, zone = 0; pin <= PIN_ZONE5_AMOUNT; ++pin, ++zone) {
+        Blynk.virtualWrite(pin, _zones[zone].amount / 10.0);
+    }
+}
 
 void BlynkHandler::terminalPrintln(const char* msg)
 {
@@ -313,51 +238,80 @@ void BlynkHandler::terminalPrintln(const char* msg)
     gs_terminal.flush();
 }
 
-void BlynkHandler::processButtonCallbackRequests()
+void BlynkHandler::setStartHandler(StartHandler&& handler)
 {
-    // if (m_callIncrementTempCb) {
-    //     _heatingController.incTargetTemp();
-    // }
-
-    // if (m_callDecrementTempCb) {
-    //     _heatingController.decTargetTemp();
-    // }
-
-    // if (m_callActivateBoostCb) {
-    //     if (!_heatingController.isBoostActive()) {
-    //         _heatingController.activateBoost();
-    //     } else {
-    //         _heatingController.extendBoost();
-    //     }
-    // }
-
-    // if (m_callDeactivateBoostCb && _heatingController.isBoostActive()) {
-    //     _heatingController.deactivateBoost();
-    // }
-
-    // m_callIncrementTempCb = false;
-    // m_callDecrementTempCb = false;
-    // m_callActivateBoostCb = false;
-    // m_callDeactivateBoostCb = false;
+    _startHandler = std::move(handler);
 }
 
-void BlynkHandler::processValueUpdates()
+void BlynkHandler::setStopHandler(StopHandler&& handler)
 {
-    // if (m_mode.changed()) {
-    //     _heatingController.setMode(static_cast<HeatingController::Mode>(m_mode.value()));
-    // }
+    _stopHandler = std::move(handler);
+}
 
-    // if (m_targetTemperature.changed()) {
-    //     _heatingController.setTargetTemp(m_targetTemperature * 10);
-    // }
+size_t BlynkHandler::virtualPinToZoneIndex(const int pin)
+{
+    if (pin >= PIN_ZONE0_AMOUNT && pin <= PIN_ZONE5_AMOUNT) {
+        return pin - PIN_ZONE0_AMOUNT;
+    }
 
-    // if (m_nightTimeTemperature.changed()) {
-    //     _heatingController.setNightTimeTemp(m_nightTimeTemperature * 10);
-    // }
+    if (pin >= PIN_ZONE0_SELECT && pin <= PIN_ZONE5_SELECT) {
+        return pin - PIN_ZONE0_SELECT;
+    }
 
-    // if (m_daytimeTemperature.changed()) {
-    //     _heatingController.setDaytimeTemp(m_daytimeTemperature * 10);
-    // }
+    return 0;
+}
+
+void BlynkHandler::onStartButtonPressed()
+{
+    if (!_controlsEnabled) {
+        return;
+    }
+
+    _log.debug("START button pressed");
+
+    std::vector<StartedZone> zones;
+
+    for (auto i = 0u; i < _zones.size(); ++i) {
+        auto& zone = _zones[i];
+
+        if (!zone.selected) {
+            continue;
+        }
+
+        zone.selected = false;
+
+        _log.debug("starting selected zone, index=%u, amount=%u", i, zone.amount);
+
+        StartedZone sz;
+        sz.amount = zone.amount;
+        sz.zone = i;
+
+        zones.push_back(std::move(sz));
+    }
+
+    if (zones.empty()) {
+        _log.debug("no zone selected to start");
+        return;
+    }
+
+    if (!_startHandler) {
+        _log.warning("startHandler is empty");
+        return;
+    }
+
+    _startHandler(zones);
+}
+
+void BlynkHandler::onStopButtonPressed()
+{
+    _log.debug("STOP button pressed");
+
+    if (!_stopHandler) {
+        _log.warning("stopHandler is empty");
+        return;
+    }
+
+    _stopHandler();
 }
 
 template <typename T, int size>

@@ -80,6 +80,30 @@ bool Pump::isRunning() const
     return _state != State::Idle;
 }
 
+Decilitres Pump::pumpedAmount() const
+{
+    return _flowSensor.ticks() / Config::FlowSensorTicksPerDecilitre;
+}
+
+Decilitres Pump::remainingAmount() const
+{
+    if (!isRunning() || _manualIrrigation) {
+        return 0;
+    }
+
+    return std::max(0, _requestedAmount - pumpedAmount());
+}
+
+uint8_t Pump::activeZone() const
+{
+    return _requestedZone;
+}
+
+bool Pump::isManual() const
+{
+    return isRunning() && _manualIrrigation;
+}
+
 void Pump::setLeakDetectedHandler(LeakDetectedHandler&& handler)
 {
     _leakDetectedHandler = std::move(handler);
