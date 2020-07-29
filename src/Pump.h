@@ -65,6 +65,7 @@ private:
     int32_t _rampUpStartTicks = 0;
     int32_t _lastCheckTimestamp = 0;
     std::size_t _lastFlowSensorTicks = 0;
+    uint8_t _waterFlowErrors = 0;
 
     const char* toString(State state);
 

@@ -74,5 +74,6 @@ namespace Config
         static constexpr int32_t PumpRampUpTimeMs = 2000;
         static constexpr int32_t LeakCheckLengthMs = 5000;
         static constexpr int32_t FlowSensorCheckIntervalMs = 1000;
+        static constexpr int32_t FlowSensorMinDeltaTicks = 10;
     }
 }

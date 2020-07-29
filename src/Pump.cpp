@@ -163,6 +163,8 @@ void Pump::startIrrigation()
 
     _log.debug("ramping up for %u ms", Config::Pump::PumpRampUpTimeMs);
 
+    _waterFlowErrors = 0;
+
     changeState(State::RampingUp);
 }
 
@@ -209,6 +211,18 @@ void Pump::checkIrrigationState()
     const auto remainingAmount = _requestedAmount - totalAmount;
     _log.debug("remaining amount: %d", remainingAmount);
 
+    // Check if water flow is sufficient to avoid running the pump dry
+    if (flowSensorTicksDelta < Config::Pump::FlowSensorMinDeltaTicks) {
+        _log.warning("insufficient water flow detected");
+
+        if (++_waterFlowErrors >= 3) {
+            _log.error("stopping due to insufficient water flow");
+            changeState(State::Stopping);
+            return;
+        }
+    }
+
+    // Check if the requested amount is pumped out
     if (!_manualIrrigation && totalAmount >= _requestedAmount)
     {
         _log.debug("requested amount pumped out, stopping");
