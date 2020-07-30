@@ -230,9 +230,9 @@ void Pump::checkIrrigationState()
 
     // FIXME use TicksPerDecilitre from Settings
     const auto totalAmount = static_cast<double>(flowSensorTicks) / Config::FlowSensorTicksPerDecilitre; // _settings.data.flowSensor.ticksPerDecilitres;
-    _log.debug("total amount: %u", totalAmount);
+    _log.debug("total amount: %0.1f", totalAmount);
 
-    const auto remainingAmount = _requestedAmount - totalAmount;
+    const Decilitres remainingAmount = _requestedAmount - totalAmount;
     _log.debug("remaining amount: %d", remainingAmount);
 
     // Check if water flow is sufficient to avoid running the pump dry

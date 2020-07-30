@@ -38,6 +38,8 @@ std::size_t FlowSensor::ticks() const
 void FlowSensor::reset()
 {
     _log.info("resetting flow sensor tick count");
+
+    _ticks = 0;
 }
 
 void FlowSensor::task()
