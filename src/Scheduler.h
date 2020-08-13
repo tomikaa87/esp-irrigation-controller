@@ -13,7 +13,7 @@
 
 #include <iostream>
 
-class SystemClock;
+class ISystemClock;
 
 class Scheduler
 {
@@ -39,7 +39,7 @@ public:
         {}
     };
 
-    Scheduler(const SystemClock& systemClock);
+    Scheduler(const ISystemClock& systemClock);
 
     bool hasPendingEvents() const
     {
@@ -57,7 +57,7 @@ public:
 
 private:
     Logger _log{ "Scheduler" };
-    const SystemClock& _systemClock;
+    const ISystemClock& _systemClock;
     std::queue<PendingEvent> _pendingEvents;
     std::vector<StoredEvent> _storedEvents;
 

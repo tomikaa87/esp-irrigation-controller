@@ -1,238 +1,263 @@
 #include "Settings.h"
 
-#include "drivers/EERAM.h"
-
-#include <coredecls.h> // crc32()
-
-Settings::Settings()
+Settings::Settings(ISettingsHandler& handler)
+    : _handler(handler)
 {
-    static_assert(
-        sizeof(Data) <= Config::EeramAddresses::SchedulerDataBase - Config::EeramAddresses::SettingsBase,
-        "Settings data doesn't fit in the allocated space"
-    );
+    _handler.setDefaultsLoader([this](ISettingsHandler::DefaultsLoadReason) {
+        loadDefaults();
+    });
 
-    _log.info("initializing");
+    _handler.registerSetting(data);
+}
 
-    // Disable ASE by default to avoid unnecessary wearing when settings are not changed
-    Drivers::EERAM::StatusReg sr;
-    sr.value = 0;
-    Drivers::EERAM::setStatus(sr);
+bool Settings::load()
+{
+    return _handler.load();
+}
+
+bool Settings::save()
+{
+    return _handler.save();
 }
 
 void Settings::loadDefaults()
 {
-    _log.info("loading default settings");
-
     data = {};
 }
 
-void Settings::load()
-{
-    _log.info(
-        "loading settings from EERAM: address=%xh, length=%u",
-        Config::EeramAddresses::SettingsBase,
-        sizeof data
-    );
+// #include "drivers/EERAM.h"
 
-    const auto ok = Drivers::EERAM::read(
-        Config::EeramAddresses::SettingsBase,
-        reinterpret_cast<uint8_t*>(&data),
-        sizeof data
-    );
+// #include <coredecls.h> // crc32()
 
-    if (!ok) {
-        _log.error("failed to read settings from EERAM");
-    }
+// Settings::Settings()
+// {
+//     static_assert(
+//         sizeof(Data) <= Config::EeramAddresses::SchedulerDataBase - Config::EeramAddresses::SettingsBase,
+//         "Settings data doesn't fit in the allocated space"
+//     );
 
-    if (calculateDataChecksum() != data.checksum)
-    {
-        _log.warning("checksum error");
+//     _log.info("initializing");
 
-        loadDefaults();
-        save();
-    }
+//     // Disable ASE by default to avoid unnecessary wearing when settings are not changed
+//     Drivers::EERAM::StatusReg sr;
+//     sr.value = 0;
+//     Drivers::EERAM::setStatus(sr);
+// }
 
-    // TODO print settings
-}
+// void Settings::loadDefaults()
+// {
+//     _log.info("loading default settings");
 
-void Settings::save()
-{
-    _log.debug(
-        "saving settings to EERAM: address=%xh, length=%u",
-        Config::EeramAddresses::SettingsBase,
-        sizeof data
-    );
+//     data = {};
+// }
 
-    data.checksum = calculateDataChecksum();
+// void Settings::load()
+// {
+//     _log.info(
+//         "loading settings from EERAM: address=%xh, length=%u",
+//         Config::EeramAddresses::SettingsBase,
+//         sizeof data
+//     );
 
-    bool ok = Drivers::EERAM::write(
-        Config::EeramAddresses::SettingsBase,
-        reinterpret_cast<const uint8_t*>(&data),
-        sizeof data
-    );
+//     const auto ok = Drivers::EERAM::read(
+//         Config::EeramAddresses::SettingsBase,
+//         reinterpret_cast<uint8_t*>(&data),
+//         sizeof data
+//     );
 
-    if (ok) {
-        if (!Drivers::EERAM::getStatus().ase) {
-            _log.debug("setting ASE bit");
-            Drivers::EERAM::setAseEnabled(true);
-        }
-    } else {
-        _log.error("failed to write settings to EERAM");
-    }
-}
+//     if (!ok) {
+//         _log.error("failed to read settings from EERAM");
+//     }
 
-uint32_t Settings::calculateDataChecksum() const
-{
-    return crc32(
-        reinterpret_cast<const uint8_t*>(&data) + sizeof data.checksum,
-        sizeof data - sizeof data.checksum
-    );
-}
+//     if (calculateDataChecksum() != data.checksum)
+//     {
+//         _log.warning("checksum error");
 
-bool Settings::initializeScheduleDataHeader() const
-{
-    SchedulerDataHeader header;
+//         loadDefaults();
+//         save();
+//     }
 
-    return writeScheduleDataHeader(header);
-}
+//     // TODO print settings
+// }
 
-bool Settings::readScheduleDataHeader(SchedulerDataHeader& header) const
-{
-    auto ok = Drivers::EERAM::read(
-        Config::EeramAddresses::SchedulerDataHeaderBase,
-        reinterpret_cast<uint8_t*>(&header),
-        sizeof header
-    );
+// void Settings::save()
+// {
+//     _log.debug(
+//         "saving settings to EERAM: address=%xh, length=%u",
+//         Config::EeramAddresses::SettingsBase,
+//         sizeof data
+//     );
 
-    ok &= header.checksum == crc32(
-        reinterpret_cast<uint8_t*>(&header) + sizeof header.checksum,
-        sizeof header - sizeof header.checksum
-    );
+//     data.checksum = calculateDataChecksum();
 
-    return ok;
-}
+//     bool ok = Drivers::EERAM::write(
+//         Config::EeramAddresses::SettingsBase,
+//         reinterpret_cast<const uint8_t*>(&data),
+//         sizeof data
+//     );
 
-bool Settings::writeScheduleDataHeader(SchedulerDataHeader& header) const
-{
-    header.checksum = crc32(
-        reinterpret_cast<uint8_t*>(&header) + sizeof header.checksum,
-        sizeof header - sizeof header.checksum
-    );
+//     if (ok) {
+//         if (!Drivers::EERAM::getStatus().ase) {
+//             _log.debug("setting ASE bit");
+//             Drivers::EERAM::setAseEnabled(true);
+//         }
+//     } else {
+//         _log.error("failed to write settings to EERAM");
+//     }
+// }
 
-    const auto ok = Drivers::EERAM::write(
-        Config::EeramAddresses::SchedulerDataHeaderBase,
-        reinterpret_cast<uint8_t*>(&header),
-        sizeof header
-    );
+// uint32_t Settings::calculateDataChecksum() const
+// {
+//     return crc32(
+//         reinterpret_cast<const uint8_t*>(&data) + sizeof data.checksum,
+//         sizeof data - sizeof data.checksum
+//     );
+// }
 
-    return ok;
-}
+// bool Settings::initializeScheduleDataHeader() const
+// {
+//     SchedulerDataHeader header;
 
-bool Settings::readSchedulerDataItem(const SchedulerDataHeader& header, uint8_t idx, SchedulerDataItem& item) const
-{
-    if (idx >= header.count) {
-        return false;
-    }
+//     return writeScheduleDataHeader(header);
+// }
 
-    auto ok = Drivers::EERAM::read(
-        Config::EeramAddresses::SchedulerDataBase + idx * sizeof item,
-        reinterpret_cast<uint8_t*>(&item),
-        sizeof item
-    );
+// bool Settings::readScheduleDataHeader(SchedulerDataHeader& header) const
+// {
+//     auto ok = Drivers::EERAM::read(
+//         Config::EeramAddresses::SchedulerDataHeaderBase,
+//         reinterpret_cast<uint8_t*>(&header),
+//         sizeof header
+//     );
 
-    if (!ok || item.erased) {
-        return false;
-    }
+//     ok &= header.checksum == crc32(
+//         reinterpret_cast<uint8_t*>(&header) + sizeof header.checksum,
+//         sizeof header - sizeof header.checksum
+//     );
 
-    ok = item.checksum == crc32(
-        reinterpret_cast<uint8_t*>(&item) + sizeof item.checksum,
-        sizeof item - sizeof item.checksum
-    );
+//     return ok;
+// }
 
-    return ok;
-}
+// bool Settings::writeScheduleDataHeader(SchedulerDataHeader& header) const
+// {
+//     header.checksum = crc32(
+//         reinterpret_cast<uint8_t*>(&header) + sizeof header.checksum,
+//         sizeof header - sizeof header.checksum
+//     );
 
-bool Settings::writeSchedulerDataItem(const SchedulerDataHeader& header, uint8_t idx, const SchedulerDataItem& item) const
-{
-    if (idx >= header.count) {
-        return false;
-    }
+//     const auto ok = Drivers::EERAM::write(
+//         Config::EeramAddresses::SchedulerDataHeaderBase,
+//         reinterpret_cast<uint8_t*>(&header),
+//         sizeof header
+//     );
 
-    auto ok = Drivers::EERAM::write(
-        Config::EeramAddresses::SchedulerDataBase + idx * sizeof item,
-        reinterpret_cast<const uint8_t*>(&item),
-        sizeof item
-    );
+//     return ok;
+// }
 
-    return ok;
-}
+// bool Settings::readSchedulerDataItem(const SchedulerDataHeader& header, uint8_t idx, SchedulerDataItem& item) const
+// {
+//     if (idx >= header.count) {
+//         return false;
+//     }
 
-bool Settings::addSchedulerDataItem(SchedulerDataHeader& header, const SchedulerDataItem& item, uint8_t& newIndex) const
-{
-    uint8_t idx = 0;
-    auto overwritten = false;
+//     auto ok = Drivers::EERAM::read(
+//         Config::EeramAddresses::SchedulerDataBase + idx * sizeof item,
+//         reinterpret_cast<uint8_t*>(&item),
+//         sizeof item
+//     );
 
-    while (idx < header.count)
-    {
-        SchedulerDataItem i;
+//     if (!ok || item.erased) {
+//         return false;
+//     }
 
-        // Damaged items can be overwritten
-        if (!readSchedulerDataItem(header, idx, i)) {
-            overwritten = true;
-            break;
-        }
+//     ok = item.checksum == crc32(
+//         reinterpret_cast<uint8_t*>(&item) + sizeof item.checksum,
+//         sizeof item - sizeof item.checksum
+//     );
 
-        if (i.erased) {
-            overwritten = true;
-            break;
-        }
+//     return ok;
+// }
 
-        ++idx;
+// bool Settings::writeSchedulerDataItem(const SchedulerDataHeader& header, uint8_t idx, const SchedulerDataItem& item) const
+// {
+//     if (idx >= header.count) {
+//         return false;
+//     }
 
-        // Index overflow, storage is full
-        if (idx == 0) {
-            return false;
-        }
-    }
+//     auto ok = Drivers::EERAM::write(
+//         Config::EeramAddresses::SchedulerDataBase + idx * sizeof item,
+//         reinterpret_cast<const uint8_t*>(&item),
+//         sizeof item
+//     );
 
-    newIndex = idx;
+//     return ok;
+// }
 
-    if (!overwritten) {
-        ++header.count;
-        auto ok = writeScheduleDataHeader(header);
-        if (!ok) {
-            return false;
-        }
-    }
+// bool Settings::addSchedulerDataItem(SchedulerDataHeader& header, const SchedulerDataItem& item, uint8_t& newIndex) const
+// {
+//     uint8_t idx = 0;
+//     auto overwritten = false;
 
-    auto ok = writeSchedulerDataItem(header, newIndex, item);
+//     while (idx < header.count)
+//     {
+//         SchedulerDataItem i;
 
-    return ok;
-}
+//         // Damaged items can be overwritten
+//         if (!readSchedulerDataItem(header, idx, i)) {
+//             overwritten = true;
+//             break;
+//         }
 
-bool Settings::eraseSchedulerDataItem(SchedulerDataHeader& header, const uint8_t idx) const
-{
-    if (idx >= header.count) {
-        return false;
-    }
+//         if (i.erased) {
+//             overwritten = true;
+//             break;
+//         }
 
-    SchedulerDataItem item;
-    item.erased = 1;
-    item.checksum = crc32(
-        reinterpret_cast<uint8_t*>(&item) + sizeof item.checksum,
-        sizeof item - sizeof item.checksum
-    );
+//         ++idx;
 
-    auto ok = Drivers::EERAM::write(
-        Config::EeramAddresses::SchedulerDataBase + idx * sizeof item,
-        reinterpret_cast<const uint8_t*>(&item),
-        sizeof item
-    );
+//         // Index overflow, storage is full
+//         if (idx == 0) {
+//             return false;
+//         }
+//     }
 
-    if (idx + 1 == header.count) {
-        --header.count;
-        writeScheduleDataHeader(header);
-    }
+//     newIndex = idx;
 
-    return ok;
-}
+//     if (!overwritten) {
+//         ++header.count;
+//         auto ok = writeScheduleDataHeader(header);
+//         if (!ok) {
+//             return false;
+//         }
+//     }
+
+//     auto ok = writeSchedulerDataItem(header, newIndex, item);
+
+//     return ok;
+// }
+
+// bool Settings::eraseSchedulerDataItem(SchedulerDataHeader& header, const uint8_t idx) const
+// {
+//     if (idx >= header.count) {
+//         return false;
+//     }
+
+//     SchedulerDataItem item;
+//     item.erased = 1;
+//     item.checksum = crc32(
+//         reinterpret_cast<uint8_t*>(&item) + sizeof item.checksum,
+//         sizeof item - sizeof item.checksum
+//     );
+
+//     auto ok = Drivers::EERAM::write(
+//         Config::EeramAddresses::SchedulerDataBase + idx * sizeof item,
+//         reinterpret_cast<const uint8_t*>(&item),
+//         sizeof item
+//     );
+
+//     if (idx + 1 == header.count) {
+//         --header.count;
+//         writeScheduleDataHeader(header);
+//     }
+
+//     return ok;
+// }

@@ -1,20 +1,18 @@
 #pragma once
 
+#include "Blynk.h"
 #include "FlowSensor.h"
 #include "LedController.h"
-#include "Logger.h"
 #include "OutputController.h"
 #include "Pump.h"
 #include "Scheduler.h"
 #include "Settings.h"
-#include "SystemClock.h"
 #include "WaterTank.h"
 #include "WebServer.h"
 #include "ZoneController.h"
 
-#include "network/BlynkHandler.h"
-#include "network/NtpClient.h"
-#include "network/OtaUpdater.h"
+#include <CoreApplication.h>
+#include <Logger.h>
 
 #include <queue>
 
@@ -24,22 +22,21 @@ public:
     IrrigationController();
 
     void task();
-    void epochTimerIsr();
 
 private:
     Logger _log{ "IrrigationController" };
-    SystemClock _systemClock;
-    NtpClient _ntpClient;
-    BlynkHandler _blynk;
-    OutputController _outputController;
+    ApplicationConfig _appConfig;
+    CoreApplication _coreApplication;
     Settings _settings;
+
+    Blynk _blynk;
+    OutputController _outputController;
     FlowSensor _flowSensor;
     WaterTank _waterTank;
     ZoneController _zoneController;
     Scheduler _scheduler;
     LedController _ledController;
     WebServer _webServer;
-    OtaUpdater _otaUpdater;
 
     struct PumpUnit {
         struct Task {
@@ -73,10 +70,7 @@ private:
     static constexpr auto SlowLoopUpdateIntervalMs = 500;
     uint32_t _lastSlowLoopUpdate = 0;
 
-    static constexpr auto BlynkUpdateIntervalMs = 1000;
-    uint32_t _lastBlynkUpdate = 0;
-
-    bool _startedFromBlynk = false;
+    bool _irrigationStartedFromBlynk = false;
 
     void processTasks();
     void processPendingEvents();
@@ -90,7 +84,5 @@ private:
 
     void updateBlynk();
     void updateBlynkStatus();
-
-    void setupArduinoOta();
 };
 

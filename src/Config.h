@@ -24,9 +24,11 @@ namespace Config
 
 */
 
-#include "PrivateConfig.h"
+// #include "PrivateConfig.h"
 
 #include <Arduino.h>
+
+#include <cstdint>
 
 namespace Config
 {
@@ -43,20 +45,6 @@ namespace Config
     namespace Network
     {
         static constexpr auto WebServerPort = 80;
-        static constexpr auto SyslogEnabled = true;
-    }
-
-    namespace EeramAddresses
-    {
-        static constexpr auto EeramSize = 16384u;
-
-        static constexpr auto SettingsBase = 0u;
-
-        static constexpr auto SchedulerDataHeaderBase = 0x80u;
-        static constexpr auto SchedulerDataBase = 0x90u;
-
-        static constexpr auto SchedulerDataHeaderSize = SchedulerDataBase - SchedulerDataHeaderBase;
-        static constexpr auto SchedulerDataSize = EeramSize - SchedulerDataBase;
     }
 
     namespace SlaveAddresses

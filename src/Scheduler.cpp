@@ -1,7 +1,8 @@
 #include "Scheduler.h"
-#include "SystemClock.h"
 
-Scheduler::Scheduler(const SystemClock& systemClock)
+#include <ISystemClock.h>
+
+Scheduler::Scheduler(const ISystemClock& systemClock)
     : _systemClock(systemClock)
 {
 }

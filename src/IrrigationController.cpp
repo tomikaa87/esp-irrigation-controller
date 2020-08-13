@@ -1,29 +1,20 @@
 #include "IrrigationController.h"
 
-#include "drivers/SimpleI2C.h"
-
-#include <ArduinoOTA.h>
-
 #include <algorithm>
 
 IrrigationController::IrrigationController()
-    : _ntpClient(_systemClock)
-    , _blynk(Config::BlynkAppToken, _settings)
+    : _coreApplication(_appConfig)
+    , _settings(_coreApplication.settings())
+    , _blynk(_coreApplication.blynkHandler(), _settings)
     , _waterTank(_settings)
     , _zoneController(_outputController)
-    , _scheduler(_systemClock)
+    , _scheduler(_coreApplication.systemClock())
     , _webServer(_flowSensor, Config::Network::WebServerPort)
-    , _otaUpdater(Config::Network::FirmwareUpdateUrl, _systemClock)
     , _pumpUnits{
         PumpUnit{ Pump{ 0, { 0, 1, 2, 3, 4, 5 }, _flowSensor, _outputController, _zoneController, _settings } }
     }
 {
     static_assert(Config::Zones <= 6, "Only 6 zones supported");
-
-    // TODO de-init before SystemClock is destroyed
-    Logger::setup(_systemClock);
-
-    Drivers::I2C::init();
 
     _settings.load();
     _zoneController.closeAll();
@@ -37,20 +28,15 @@ IrrigationController::IrrigationController()
         return true;
     });
 
-    setupArduinoOta();
     setupBlynk();
 }
 
 void IrrigationController::task()
 {
-    _systemClock.task();
     _flowSensor.task();
     _webServer.task();
-    _ntpClient.task();
-    _otaUpdater.task();
+    _coreApplication.task();
     _blynk.task();
-
-    ArduinoOTA.handle();
 
     for (auto& unit : _pumpUnits) {
         unit.pump.task();
@@ -67,28 +53,6 @@ void IrrigationController::task()
             processPendingEvents();
         }
     }
-
-    // Slow loop
-    if (_lastSlowLoopUpdate == 0 || millis() - _lastSlowLoopUpdate >= SlowLoopUpdateIntervalMs) {
-        _lastSlowLoopUpdate = millis();
-
-        if (!_updateChecked && WiFi.isConnected() && millis() - _updateCheckTimer >= 5000) {
-            _updateChecked = true;
-            _otaUpdater.forceUpdate();
-        }
-    }
-
-    // Blynk update loop
-    if (_lastBlynkUpdate == 0 || millis() - _lastBlynkUpdate >= BlynkUpdateIntervalMs) {
-        _lastBlynkUpdate = millis();
-        updateBlynk();
-        updateBlynkStatus();
-    }
-}
-
-void ICACHE_RAM_ATTR IrrigationController::epochTimerIsr()
-{
-    _systemClock.timerIsr();
 }
 
 void IrrigationController::processTasks()
@@ -114,8 +78,8 @@ void IrrigationController::processTasks()
         }
     }
 
-    if (_startedFromBlynk && idle) {
-        _startedFromBlynk = false;
+    if (_irrigationStartedFromBlynk && idle) {
+        _irrigationStartedFromBlynk = false;
         _blynk.setControlsEnabled(true);
         _blynk.resetSelectors();
     }
@@ -170,9 +134,9 @@ void IrrigationController::stopIrrigation()
 
 void IrrigationController::setupBlynk()
 {
-    _blynk.setStartHandler([this](const std::vector<BlynkHandler::StartedZone>& zones) {
+    _blynk.setStartHandler([this](const std::vector<Blynk::StartedZone>& zones) {
         _blynk.setControlsEnabled(false);
-        _startedFromBlynk = true;
+        _irrigationStartedFromBlynk = true;
 
         for (const auto& z : zones) {
             enqueueTask(z.zone, z.amount);
@@ -182,13 +146,18 @@ void IrrigationController::setupBlynk()
     _blynk.setStopHandler([this] {
         stopIrrigation();
         _blynk.setControlsEnabled(true);
-        _startedFromBlynk = false;
+        _irrigationStartedFromBlynk = false;
+    });
+
+    _coreApplication.setBlynkUpdateHandler([this] {
+        updateBlynk();
     });
 }
 
 void IrrigationController::updateBlynk()
 {
     _blynk.setFlowSensorTicks(_flowSensor.ticks());
+    updateBlynkStatus();
 }
 
 void IrrigationController::updateBlynkStatus()
@@ -223,53 +192,4 @@ void IrrigationController::updateBlynkStatus()
     }
 
     _blynk.setStatusText(s);
-}
-
-void IrrigationController::setupArduinoOta()
-{
-    ArduinoOTA.onStart([this] {
-        _webServer.shutdown();
-
-        auto type = "";
-        if (ArduinoOTA.getCommand() == U_FLASH) {
-            type = "flash";
-        } else { // U_FS
-            type = "file system";
-        }
-
-        _log.info("ArduinoOTA: starting update, type=%s", type);
-    });
-
-    ArduinoOTA.onEnd([this] {
-        _log.info("ArduinoOTA: finished");
-    });
-
-    ArduinoOTA.onError([this](const ota_error_t error) {
-        auto errorStr = "unknown error";
-        switch (error) {
-            case OTA_AUTH_ERROR:
-                errorStr = "authentication error";
-                break;
-
-            case OTA_BEGIN_ERROR:
-                errorStr = "begin failed";
-                break;
-
-            case OTA_CONNECT_ERROR:
-                errorStr = "connect failed";
-                break;
-
-            case OTA_END_ERROR:
-                errorStr = "end failed";
-                break;
-
-            case OTA_RECEIVE_ERROR:
-                errorStr = "receive failed";
-                break;
-        }
-
-        _log.error("ArduinoOTA: update failed, error: %s", errorStr);
-    });
-
-    ArduinoOTA.begin();
 }
