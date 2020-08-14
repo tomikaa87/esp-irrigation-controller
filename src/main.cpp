@@ -6,6 +6,9 @@ static std::unique_ptr<IrrigationController> irrigationController;
 
 void setup()
 {
+    ApplicationConfig appConfig;
+    appConfig.firmwareVersion = VersionNumber{ 1, 1, 0 };
+
     irrigationController.reset(new IrrigationController);
 
     // FMeasured = 8194, FIdeal = 8192, TRIMVAL = -240

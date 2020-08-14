@@ -1,5 +1,4 @@
 #include "Config.h"
-#include "FirmwareVersion.h"
 #include "FlowSensor.h"
 #include "WebServer.h"
 
@@ -7,10 +6,12 @@
 #include <vector>
 
 WebServer::WebServer(
+    const ApplicationConfig& appConfig,
     FlowSensor& flowSensor,
     const int port
 )
     : _server(port)
+    , _appConfig(appConfig)
     , _flowSensor(flowSensor)
 {
     _log.info("setting up static contents");
@@ -117,15 +118,10 @@ void WebServer::onApiStatus()
     _log.info("status requested");
 #endif
 
-    static const auto fwVer =
-        std::to_string(FW_VER_MAJOR) + "."
-        + std::to_string(FW_VER_MINOR) + "."
-        + std::to_string(FW_VER_PATCH);
-
     auto payload = nlohmann::json{
         { "activeZone", 0 },
         { "tankLevel", 0 },
-        { "firmwareVersion", fwVer },
+        { "firmwareVersion", _appConfig.firmwareVersion.toString() },
         { "flowSensor", {
             { "ticks", _flowSensor.ticks() }
         }}

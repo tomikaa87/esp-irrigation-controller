@@ -13,6 +13,7 @@ class WebServer
 {
 public:
     WebServer(
+        const ApplicationConfig& appConfig,
         FlowSensor& flowSensor,
         int port = 80
     );
@@ -29,6 +30,7 @@ public:
 
 private:
     Logger _log{ "WebServer" };
+    const ApplicationConfig& _appConfig;
     FlowSensor& _flowSensor;
 
     ESP8266WebServer _server;
