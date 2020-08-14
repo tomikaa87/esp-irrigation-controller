@@ -7,10 +7,9 @@
 
 WebServer::WebServer(
     const ApplicationConfig& appConfig,
-    FlowSensor& flowSensor,
-    const int port
+    FlowSensor& flowSensor
 )
-    : _server(port)
+    : _server(appConfig.webServer.port)
     , _appConfig(appConfig)
     , _flowSensor(flowSensor)
 {

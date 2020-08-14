@@ -1,4 +1,5 @@
 #include "IrrigationController.h"
+#include "PrivateConfig.h"
 
 #include <Arduino.h>
 
@@ -7,12 +8,25 @@ static std::unique_ptr<IrrigationController> irrigationController;
 void setup()
 {
     ApplicationConfig appConfig;
+
     appConfig.firmwareVersion = VersionNumber{ 1, 1, 0 };
 
-    irrigationController.reset(new IrrigationController);
+    appConfig.blynk.appToken = Config::Blynk::AppToken;
+    appConfig.blynk.serverHostName = Config::Blynk::ServerHostName;
+    appConfig.blynk.serverPort = Config::Blynk::ServerPort;
 
-    // FMeasured = 8194, FIdeal = 8192, TRIMVAL = -240
-    // rtc::setDigitalTrimming(240 >> 1);
+    appConfig.logging.syslog.enabled = true;
+    appConfig.logging.syslog.hostName = Config::Logging::SyslogHostName;
+    appConfig.logging.syslog.serverHostName = Config::Logging::SyslogServerHost;
+    appConfig.logging.syslog.serverPort = Config::Logging::SyslogServerPort;
+
+    appConfig.otaUpdate.updateCheckIntervalMs = 60000;
+    appConfig.otaUpdate.updateUrl = Config::OtaUpdate::FirmwareUpdateUrl;
+
+    appConfig.wifi.password = Config::WiFi::Password;
+    appConfig.wifi.ssid = Config::WiFi::SSID;
+
+    irrigationController.reset(new IrrigationController);
 
     Serial.println("Initialization finished");
 }

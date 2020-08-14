@@ -14,8 +14,7 @@ class WebServer
 public:
     WebServer(
         const ApplicationConfig& appConfig,
-        FlowSensor& flowSensor,
-        int port = 80
+        FlowSensor& flowSensor
     );
 
     using ZoneStartedHandler = std::function<bool(uint8_t zone)>;
