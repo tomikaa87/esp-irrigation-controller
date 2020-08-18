@@ -19,13 +19,13 @@
 class IrrigationController
 {
 public:
-    IrrigationController();
+    IrrigationController(const ApplicationConfig& appConfig);
 
     void task();
 
 private:
     Logger _log{ "IrrigationController" };
-    ApplicationConfig _appConfig;
+    const ApplicationConfig& _appConfig;
     CoreApplication _coreApplication;
     Settings _settings;
 

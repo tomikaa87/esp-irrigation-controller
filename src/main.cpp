@@ -7,7 +7,7 @@ static std::unique_ptr<IrrigationController> irrigationController;
 
 void setup()
 {
-    ApplicationConfig appConfig;
+    static ApplicationConfig appConfig;
 
     appConfig.firmwareVersion = VersionNumber{ 1, 1, 0 };
 
@@ -26,7 +26,7 @@ void setup()
     appConfig.wifi.password = Config::WiFi::Password;
     appConfig.wifi.ssid = Config::WiFi::SSID;
 
-    irrigationController.reset(new IrrigationController);
+    irrigationController.reset(new IrrigationController(appConfig));
 
     Serial.println("Initialization finished");
 }

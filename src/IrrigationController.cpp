@@ -2,8 +2,9 @@
 
 #include <algorithm>
 
-IrrigationController::IrrigationController()
-    : _coreApplication(_appConfig)
+IrrigationController::IrrigationController(const ApplicationConfig& appConfig)
+    : _appConfig(appConfig)
+    , _coreApplication(_appConfig)
     , _settings(_coreApplication.settings())
     , _blynk(_coreApplication.blynkHandler(), _settings)
     , _waterTank(_settings)
