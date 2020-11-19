@@ -34,6 +34,15 @@ WebServer::WebServer(
 
     _server.on("/api/scheduler/add", [this] { onSchedulerApiAdd(); });
 
+    _server.on("/api/drain/0/start", [this] { onStartDraining(0); });
+    _server.on("/api/drain/1/start", [this] { onStartDraining(1); });
+    _server.on("/api/drain/2/start", [this] { onStartDraining(2); });
+    _server.on("/api/drain/3/start", [this] { onStartDraining(3); });
+    _server.on("/api/drain/4/start", [this] { onStartDraining(4); });
+    _server.on("/api/drain/5/start", [this] { onStartDraining(5); });
+
+    _server.on("/api/drain/stop", [this] { onStopDraining(); });
+
     _server.begin();
 }
 
@@ -45,6 +54,16 @@ void WebServer::setZoneStartedHandler(ZoneStartedHandler&& handler)
 void WebServer::setStopHandler(StopHandler&& handler)
 {
     _stopHandler = std::move(handler);
+}
+
+void WebServer::setStartDrainingHandler(StartDrainingHandler&& handler)
+{
+    _startDrainingHandler = std::move(handler);
+}
+
+void WebServer::setStopDrainingHandler(StopDrainingHandler&& handler)
+{
+    _stopDrainingHandler = std::move(handler);
 }
 
 void WebServer::shutdown()
@@ -145,4 +164,30 @@ void WebServer::onSchedulerApiAdd()
     if (result != SchedulerApiController::ParseResult::Ok) {
         _server.send(400, "text/plain", SchedulerApiController::toString(result));
     }
+}
+
+void WebServer::onStartDraining(const uint8_t zone)
+{
+    if (!_startDrainingHandler) {
+        _server.send(500);
+        return;
+    }
+
+    if (zone > Config::Zones - 1) {
+        _server.send(400);
+        return;
+    }
+
+    _startDrainingHandler(zone);
+    _server.send(200);
+}
+
+void WebServer::onStopDraining()
+{
+    if (!_stopDrainingHandler) {
+        _server.send(500);
+    }
+
+    _stopDrainingHandler();
+    _server.send(200);
 }

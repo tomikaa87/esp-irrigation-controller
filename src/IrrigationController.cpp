@@ -29,6 +29,12 @@ IrrigationController::IrrigationController(const ApplicationConfig& appConfig)
         return true;
     });
 
+    _webServer.setStartDrainingHandler([this](const uint8_t zone) {
+        startDraining(zone);
+    });
+
+    _webServer.setStopDrainingHandler([this] { stopDraining(); });
+
     setupBlynk();
 }
 
@@ -101,6 +107,11 @@ void IrrigationController::processPendingEvents()
 
 bool IrrigationController::enqueueTask(const uint8_t zone, const Decilitres amount, const bool manual)
 {
+    if (_draining) {
+        _log.warning("can't add task during draining");
+        return false;
+    }
+
     auto pumpForZone = std::find_if(
         _pumpUnits.begin(),
         _pumpUnits.end(),
@@ -193,4 +204,20 @@ void IrrigationController::updateBlynkStatus()
     }
 
     _blynk.setStatusText(s);
+}
+
+void IrrigationController::startDraining(const uint8_t zone)
+{
+    _log.info("start draining process");
+
+    _draining = true;
+    _zoneController.open(zone);
+}
+
+void IrrigationController::stopDraining()
+{
+    _log.info("stop draining process");
+
+    _draining = false;
+    _zoneController.closeAll();
 }

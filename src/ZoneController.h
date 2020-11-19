@@ -13,6 +13,8 @@ public:
 
     void open(uint8_t zone);
     void close(uint8_t zone);
+
+    void openAll();
     void closeAll();
 
 private:

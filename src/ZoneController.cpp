@@ -20,6 +20,15 @@ void ZoneController::close(const uint8_t zone)
     _outputController.deactive(Config::Pins::ZoneOutputBase + zone);
 }
 
+void ZoneController::openAll()
+{
+    _log.info("opening all zones");
+
+    for (auto i = 0u; i < Config::Zones; ++i) {
+        _outputController.activate(Config::Pins::ZoneOutputBase + i);
+    }
+}
+
 void ZoneController::closeAll()
 {
     _log.info("closing all zones");

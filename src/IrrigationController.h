@@ -71,6 +71,7 @@ private:
     uint32_t _lastSlowLoopUpdate = 0;
 
     bool _irrigationStartedFromBlynk = false;
+    bool _draining = false;
 
     void processTasks();
     void processPendingEvents();
@@ -84,5 +85,8 @@ private:
 
     void updateBlynk();
     void updateBlynkStatus();
+
+    void startDraining(uint8_t zone);
+    void stopDraining();
 };
 

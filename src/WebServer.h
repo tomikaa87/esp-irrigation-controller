@@ -23,6 +23,12 @@ public:
     using StopHandler = std::function<bool()>;
     void setStopHandler(StopHandler&& handler);
 
+    using StartDrainingHandler = std::function<void(uint8_t zone)>;
+    void setStartDrainingHandler(StartDrainingHandler&& handler);
+
+    using StopDrainingHandler = std::function<void()>;
+    void setStopDrainingHandler(StopDrainingHandler&& handler);
+
     void shutdown();
 
     void task();
@@ -39,6 +45,9 @@ private:
 
     SchedulerApiController _schedulerApiController;
 
+    StartDrainingHandler _startDrainingHandler;
+    StopDrainingHandler _stopDrainingHandler;
+
     bool _shutdown = false;
 
     void onApiZoneStart(uint8_t zone);
@@ -46,4 +55,7 @@ private:
     void onApiStatus();
 
     void onSchedulerApiAdd();
+
+    void onStartDraining(uint8_t zone);
+    void onStopDraining();
 };
