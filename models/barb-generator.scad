@@ -110,9 +110,10 @@ module adapter(
     output_port_h = 22,
     output_port_spacing = 13,
     output_port_barb_count = 2,
-    vault_wall_th = 2
+    vault_wall_th = 2,
+    vault_extra_width = 0
 ) {
-    vault_w = width_of_output_ports(output_port_count, output_port_od, output_port_spacing);
+    vault_w = width_of_output_ports(output_port_count, output_port_od, output_port_spacing) + vault_extra_width;
     vault_h = 13;
     vault_d = output_port_od + vault_wall_th * 4;
 
@@ -173,5 +174,23 @@ adapter();
     output_port_h = 22,
     output_port_spacing = 13,
     output_port_barb_count = 2,
-    vault_wall_th = 2
+    vault_wall_th = 2,
+    vault_extra_width = 0
+*/
+
+/*
+    Parameters for small 1x2 splitter
+    
+    input_port_od = 13,
+    input_port_id = 9,
+    input_port_h = 22,
+    input_port_barb_count = 2,
+    output_port_count = 2,
+    output_port_od = 8,
+    output_port_id = 6,
+    output_port_h = 20,
+    output_port_spacing = 13,
+    output_port_barb_count = 2,
+    vault_wall_th = 2,
+    vault_extra_width = 10
 */
