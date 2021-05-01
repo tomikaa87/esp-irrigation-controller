@@ -29,6 +29,9 @@ public:
     using StopDrainingHandler = std::function<void()>;
     void setStopDrainingHandler(StopDrainingHandler&& handler);
 
+    using EnqueueStoredHandler = std::function<void(uint8_t zone)>;
+    void setEnqueueStoredHandler(EnqueueStoredHandler&& handler);
+
     void shutdown();
 
     void task();
@@ -48,6 +51,8 @@ private:
     StartDrainingHandler _startDrainingHandler;
     StopDrainingHandler _stopDrainingHandler;
 
+    EnqueueStoredHandler _enqueueStoredHandler;
+
     bool _shutdown = false;
 
     void onApiZoneStart(uint8_t zone);
@@ -58,4 +63,6 @@ private:
 
     void onStartDraining(uint8_t zone);
     void onStopDraining();
+
+    void onApiEnqueueStored(uint8_t zone);
 };

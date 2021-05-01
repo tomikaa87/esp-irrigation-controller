@@ -41,6 +41,13 @@ WebServer::WebServer(
     _server.on("/api/drain/4/start", [this] { onStartDraining(4); });
     _server.on("/api/drain/5/start", [this] { onStartDraining(5); });
 
+    _server.on("/api/zone/0/enqueue/stored", [this] { onApiEnqueueStored(0); });
+    _server.on("/api/zone/1/enqueue/stored", [this] { onApiEnqueueStored(1); });
+    _server.on("/api/zone/2/enqueue/stored", [this] { onApiEnqueueStored(2); });
+    _server.on("/api/zone/3/enqueue/stored", [this] { onApiEnqueueStored(3); });
+    _server.on("/api/zone/4/enqueue/stored", [this] { onApiEnqueueStored(4); });
+    _server.on("/api/zone/5/enqueue/stored", [this] { onApiEnqueueStored(5); });
+
     _server.on("/api/drain/stop", [this] { onStopDraining(); });
 
     _server.begin();
@@ -64,6 +71,11 @@ void WebServer::setStartDrainingHandler(StartDrainingHandler&& handler)
 void WebServer::setStopDrainingHandler(StopDrainingHandler&& handler)
 {
     _stopDrainingHandler = std::move(handler);
+}
+
+void WebServer::setEnqueueStoredHandler(EnqueueStoredHandler&& handler)
+{
+    _enqueueStoredHandler = std::move(handler);
 }
 
 void WebServer::shutdown()
@@ -186,8 +198,20 @@ void WebServer::onStopDraining()
 {
     if (!_stopDrainingHandler) {
         _server.send(500);
+        return;
     }
 
     _stopDrainingHandler();
+    _server.send(200);
+}
+
+void WebServer::onApiEnqueueStored(const uint8_t zone)
+{
+    if (!_enqueueStoredHandler) {
+        _server.send(500);
+        return;
+    }
+
+    _enqueueStoredHandler(zone);
     _server.send(200);
 }

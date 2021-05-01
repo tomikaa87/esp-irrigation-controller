@@ -20,21 +20,7 @@ IrrigationController::IrrigationController(const ApplicationConfig& appConfig)
     _settings.load();
     _zoneController.closeAll();
 
-    _webServer.setZoneStartedHandler([this](const uint8_t zone) {
-        return startManualIrrigation(zone);
-    });
-
-    _webServer.setStopHandler([this] {
-        stopIrrigation();
-        return true;
-    });
-
-    _webServer.setStartDrainingHandler([this](const uint8_t zone) {
-        startDraining(zone);
-    });
-
-    _webServer.setStopDrainingHandler([this] { stopDraining(); });
-
+    setupWebServer();
     setupBlynk();
 }
 
@@ -132,6 +118,18 @@ bool IrrigationController::enqueueTask(const uint8_t zone, const Decilitres amou
     return true;
 }
 
+bool IrrigationController::enqueueTaskWithStoredAmount(const uint8_t zone)
+{
+    if (zone >= Config::Zones) {
+        _log.error("can't add task for invalid zone: %u", zone);
+        return false;
+    }
+
+    const auto amount = _settings.data.blynk.amounts[zone];
+
+    return enqueueTask(zone, amount);
+}
+
 bool IrrigationController::startManualIrrigation(const uint8_t zone)
 {
     return enqueueTask(zone, 0, true);
@@ -220,4 +218,28 @@ void IrrigationController::stopDraining()
 
     _draining = false;
     _zoneController.closeAll();
+}
+
+void IrrigationController::setupWebServer()
+{
+    _log.info("setting up web server");
+
+    _webServer.setZoneStartedHandler([this](const uint8_t zone) {
+        return startManualIrrigation(zone);
+    });
+
+    _webServer.setStopHandler([this] {
+        stopIrrigation();
+        return true;
+    });
+
+    _webServer.setStartDrainingHandler([this](const uint8_t zone) {
+        startDraining(zone);
+    });
+
+    _webServer.setStopDrainingHandler([this] { stopDraining(); });
+
+    _webServer.setEnqueueStoredHandler([this](const uint8_t zone) {
+        enqueueTaskWithStoredAmount(zone);
+    });
 }

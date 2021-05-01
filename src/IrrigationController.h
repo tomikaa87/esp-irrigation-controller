@@ -77,6 +77,7 @@ private:
     void processPendingEvents();
 
     bool enqueueTask(uint8_t zone, Decilitres amount, bool manual = false);
+    bool enqueueTaskWithStoredAmount(uint8_t zone);
 
     bool startManualIrrigation(uint8_t zone);
     void stopIrrigation();
@@ -88,5 +89,7 @@ private:
 
     void startDraining(uint8_t zone);
     void stopDraining();
+
+    void setupWebServer();
 };
 
