@@ -17,7 +17,7 @@ WebServer::WebServer(
 
     _server.serveStatic("/", LittleFS, "/index.html");
     _server.serveStatic("/index.html", LittleFS, "/index.html");
-    _server.serveStatic("/jquery-3.5.1.min.js", LittleFS, "/jquery-3.5.1.min.js");
+    _server.serveStatic("/jquery-3.6.0.min.js", LittleFS, "/jquery-3.6.0.min.js");
 
     _log.info("setting up API controller");
 
