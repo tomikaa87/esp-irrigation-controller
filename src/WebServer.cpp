@@ -2,7 +2,7 @@
 #include "FlowSensor.h"
 #include "WebServer.h"
 
-#include <FS.h>
+#include <LittleFS.h>
 #include <vector>
 
 WebServer::WebServer(
@@ -15,9 +15,9 @@ WebServer::WebServer(
 {
     _log.info("setting up static contents");
 
-    _server.serveStatic("/", SPIFFS, "/index.html");
-    _server.serveStatic("/index.html", SPIFFS, "/index.html");
-    _server.serveStatic("/jquery-3.5.1.min.js", SPIFFS, "/jquery-3.5.1.min.js");
+    _server.serveStatic("/", LittleFS, "/index.html");
+    _server.serveStatic("/index.html", LittleFS, "/index.html");
+    _server.serveStatic("/jquery-3.5.1.min.js", LittleFS, "/jquery-3.5.1.min.js");
 
     _log.info("setting up API controller");
 
@@ -87,7 +87,7 @@ void WebServer::shutdown()
     _log.info("shutting down");
 
     _server.close();
-    SPIFFS.end();
+    LittleFS.end();
 
     _shutdown = true;
 }
