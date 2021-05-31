@@ -9,7 +9,7 @@ void setup()
 {
     static ApplicationConfig appConfig;
 
-    appConfig.firmwareVersion = VersionNumber{ 1, 5, 0 };
+    appConfig.firmwareVersion = VersionNumber{ 1, 5, 1 };
 
     appConfig.blynk.appToken = Config::Blynk::AppToken;
     appConfig.blynk.serverHostName = Config::Blynk::ServerHostName;
@@ -26,6 +26,8 @@ void setup()
 
     appConfig.wifi.password = Config::WiFi::Password;
     appConfig.wifi.ssid = Config::WiFi::SSID;
+
+    appConfig.hostName = Config::HostName;
 
     irrigationController.reset(new IrrigationController(appConfig));
 
