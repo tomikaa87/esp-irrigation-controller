@@ -9,9 +9,9 @@ WebServer::WebServer(
     const ApplicationConfig& appConfig,
     FlowSensor& flowSensor
 )
-    : _server(appConfig.webServer.port)
-    , _appConfig(appConfig)
+    : _appConfig(appConfig)
     , _flowSensor(flowSensor)
+    , _server(appConfig.webServer.port)
 {
     _log.info("setting up static contents");
 
