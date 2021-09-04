@@ -22,7 +22,7 @@ public:
         uint16_t leakCheckDetectionTicks = 0;
     };
 
-    DECLARE_SETTINGS_STRUCT(BlynkSettings)
+    DECLARE_SETTINGS_STRUCT(IrrigationSettings)
     {
         Decilitres amounts[Config::Zones] = { 0 };
     };
@@ -31,7 +31,7 @@ public:
     {
         TankSettings tank;
         FlowSensorSettings flowSensor;
-        BlynkSettings blynk;
+        IrrigationSettings irrigation;
     };
 
     Data data;

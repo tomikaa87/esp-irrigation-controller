@@ -14,6 +14,7 @@ IrrigationController::IrrigationController(const ApplicationConfig& appConfig)
     , _pumpUnits{
         PumpUnit{ Pump{ 0, { 0, 1, 2, 3, 4, 5 }, _flowSensor, _outputController, _zoneController, _settings } }
     }
+    , _mqtt(_coreApplication.mqttClient())
 {
     static_assert(Config::Zones <= 6, "Only 6 zones supported");
 
@@ -22,6 +23,7 @@ IrrigationController::IrrigationController(const ApplicationConfig& appConfig)
 
     setupWebServer();
     setupBlynk();
+    setupMqtt();
 }
 
 void IrrigationController::task()
@@ -125,7 +127,7 @@ bool IrrigationController::enqueueTaskWithStoredAmount(const uint8_t zone)
         return false;
     }
 
-    const auto amount = _settings.data.blynk.amounts[zone];
+    const auto amount = _settings.data.irrigation.amounts[zone];
 
     return enqueueTask(zone, amount);
 }
@@ -241,5 +243,47 @@ void IrrigationController::setupWebServer()
 
     _webServer.setEnqueueStoredHandler([this](const uint8_t zone) {
         enqueueTaskWithStoredAmount(zone);
+    });
+}
+
+void IrrigationController::setupMqtt()
+{
+    _log.info("setting up the MQTT interface");
+
+    _mqtt.zone1PresetAmount = _settings.data.irrigation.amounts[0];
+    _mqtt.zone2PresetAmount = _settings.data.irrigation.amounts[1];
+    _mqtt.zone3PresetAmount = _settings.data.irrigation.amounts[2];
+    _mqtt.zone4PresetAmount = _settings.data.irrigation.amounts[3];
+    _mqtt.zone5PresetAmount = _settings.data.irrigation.amounts[4];
+    _mqtt.zone6PresetAmount = _settings.data.irrigation.amounts[5];
+
+    _mqtt.zone1PresetAmount.setChangedHandler([this](const int v) {
+        _settings.data.irrigation.amounts[0] = v;
+        _settings.save();
+    });
+
+    _mqtt.zone2PresetAmount.setChangedHandler([this](const int v) {
+        _settings.data.irrigation.amounts[1] = v;
+        _settings.save();
+    });
+
+    _mqtt.zone3PresetAmount.setChangedHandler([this](const int v) {
+        _settings.data.irrigation.amounts[2] = v;
+        _settings.save();
+    });
+
+    _mqtt.zone4PresetAmount.setChangedHandler([this](const int v) {
+        _settings.data.irrigation.amounts[3] = v;
+        _settings.save();
+    });
+
+    _mqtt.zone5PresetAmount.setChangedHandler([this](const int v) {
+        _settings.data.irrigation.amounts[4] = v;
+        _settings.save();
+    });
+
+    _mqtt.zone6PresetAmount.setChangedHandler([this](const int v) {
+        _settings.data.irrigation.amounts[5] = v;
+        _settings.save();
     });
 }

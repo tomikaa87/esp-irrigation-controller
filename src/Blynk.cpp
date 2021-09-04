@@ -119,7 +119,7 @@ void Blynk::resetSelectors()
     }
 
     for (auto pin = VirtualPins::Amount::Zone0, zone = 0; pin <= VirtualPins::Amount::Zone5; ++pin, ++zone) {
-        _handler.writePin(pin, Variant{ _settings.data.blynk.amounts[zone] / 10.0 });
+        _handler.writePin(pin, Variant{ _settings.data.irrigation.amounts[zone] / 10.0 });
     }
 }
 
@@ -165,7 +165,7 @@ Variant Blynk::onPinRead(const int pin)
 {
     if (pin >= VirtualPins::Amount::Zone0 && pin <= VirtualPins::Amount::Zone5) {
         const auto zoneIdx = virtualPinToZoneIndex(pin);
-        return Variant{ _settings.data.blynk.amounts[zoneIdx] };
+        return Variant{ _settings.data.irrigation.amounts[zoneIdx] };
     }
 
     if (pin >= VirtualPins::Select::Zone0 && pin <= VirtualPins::Select::Zone5) {
@@ -204,7 +204,7 @@ void Blynk::onPinWritten(const int pin, const Variant& value)
         );
 
         _log.debug("amount changed, zone=%u, amount=%u", zoneIdx, amount);
-        _settings.data.blynk.amounts[zoneIdx] = amount;
+        _settings.data.irrigation.amounts[zoneIdx] = amount;
         saveSettingsDeferred();
     } else if (pin >= VirtualPins::Select::Zone0 && pin <= VirtualPins::Select::Zone5) {
         const auto zoneIdx = virtualPinToZoneIndex(pin);
@@ -230,7 +230,7 @@ void Blynk::onStartButtonPressed()
 
         zone.selected = false;
 
-        const auto amount = _settings.data.blynk.amounts[i];
+        const auto amount = _settings.data.irrigation.amounts[i];
 
         _log.debug("starting selected zone, index=%u, amount=%u", i, amount);
 
