@@ -11,6 +11,8 @@ void ZoneController::open(const uint8_t zone)
     _log.info("opening zone: zone=%u", zone);
 
     _outputController.activate(Config::Pins::ZoneOutputBase + zone);
+
+    notifyChangedHandlers(zone, true);
 }
 
 void ZoneController::close(const uint8_t zone)
@@ -18,6 +20,8 @@ void ZoneController::close(const uint8_t zone)
     _log.info("closing zone: zone=%u", zone);
 
     _outputController.deactive(Config::Pins::ZoneOutputBase + zone);
+
+    notifyChangedHandlers(zone, false);
 }
 
 void ZoneController::openAll()
@@ -26,6 +30,7 @@ void ZoneController::openAll()
 
     for (auto i = 0u; i < Config::Zones; ++i) {
         _outputController.activate(Config::Pins::ZoneOutputBase + i);
+        notifyChangedHandlers(i, true);
     }
 }
 
@@ -35,5 +40,20 @@ void ZoneController::closeAll()
 
     for (auto i = 0u; i < Config::Zones; ++i) {
         _outputController.deactive(Config::Pins::ZoneOutputBase + i);
+        notifyChangedHandlers(i, false);
+    }
+}
+
+void ZoneController::addZoneChangedHandler(ZoneChangedHandler&& handler)
+{
+    _changedHandlers.emplace_back(std::move(handler));
+}
+
+void ZoneController::notifyChangedHandlers(const uint8_t zone, const bool open)
+{
+    for (const auto& h : _changedHandlers) {
+        if (h) {
+            h(zone, open);
+        }
     }
 }

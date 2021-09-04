@@ -3,6 +3,8 @@
 #include "Logger.h"
 
 #include <cstdint>
+#include <functional>
+#include <vector>
 
 class OutputController;
 
@@ -17,8 +19,15 @@ public:
     void openAll();
     void closeAll();
 
+    using ZoneChangedHandler = std::function<void (uint8_t zone, bool open)>;
+
+    void addZoneChangedHandler(ZoneChangedHandler&& handler);
+
 private:
     Logger _log{ "ZoneController" };
     OutputController& _outputController;
+    std::vector<ZoneChangedHandler> _changedHandlers;
+
+    void notifyChangedHandlers(uint8_t zone, bool open);
 };
 

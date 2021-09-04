@@ -147,5 +147,6 @@ private:
     void setupWebServer();
 
     void setupMqtt();
+    void updateMqtt();
 };
 

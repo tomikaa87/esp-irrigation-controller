@@ -1,6 +1,7 @@
 #include "IrrigationController.h"
 
 #include <algorithm>
+#include <array>
 
 IrrigationController::IrrigationController(const ApplicationConfig& appConfig)
     : _appConfig(appConfig)
@@ -248,14 +249,11 @@ void IrrigationController::setupWebServer()
 
 void IrrigationController::setupMqtt()
 {
-    _log.info("setting up the MQTT interface");
+    _coreApplication.setMqttUpdateHandler([this] {
+        updateMqtt();
+    });
 
-    _mqtt.zone1PresetAmount = _settings.data.irrigation.amounts[0];
-    _mqtt.zone2PresetAmount = _settings.data.irrigation.amounts[1];
-    _mqtt.zone3PresetAmount = _settings.data.irrigation.amounts[2];
-    _mqtt.zone4PresetAmount = _settings.data.irrigation.amounts[3];
-    _mqtt.zone5PresetAmount = _settings.data.irrigation.amounts[4];
-    _mqtt.zone6PresetAmount = _settings.data.irrigation.amounts[5];
+    _log.info("setting up the MQTT interface");
 
     _mqtt.zone1PresetAmount.setChangedHandler([this](const int v) {
         _settings.data.irrigation.amounts[0] = v;
@@ -286,4 +284,29 @@ void IrrigationController::setupMqtt()
         _settings.data.irrigation.amounts[5] = v;
         _settings.save();
     });
+
+    _zoneController.addZoneChangedHandler([this](const uint8_t zone, const bool open) {
+        const std::array<MqttVariable<bool>*, Config::Zones> zoneActiveStates{
+            &_mqtt.zone1Active,
+            &_mqtt.zone2Active,
+            &_mqtt.zone3Active,
+            &_mqtt.zone4Active,
+            &_mqtt.zone5Active,
+            &_mqtt.zone6Active,
+        };
+
+        if (zone < zoneActiveStates.size()) {
+            *zoneActiveStates[zone] = open;
+        }
+    });
+}
+
+void IrrigationController::updateMqtt()
+{
+    _mqtt.zone1PresetAmount = _settings.data.irrigation.amounts[0];
+    _mqtt.zone2PresetAmount = _settings.data.irrigation.amounts[1];
+    _mqtt.zone3PresetAmount = _settings.data.irrigation.amounts[2];
+    _mqtt.zone4PresetAmount = _settings.data.irrigation.amounts[3];
+    _mqtt.zone5PresetAmount = _settings.data.irrigation.amounts[4];
+    _mqtt.zone6PresetAmount = _settings.data.irrigation.amounts[5];
 }
