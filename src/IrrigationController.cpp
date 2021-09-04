@@ -65,7 +65,7 @@ void IrrigationController::processTasks()
         }
 
         const auto task = unit.taskQueue.front();
-        unit.taskQueue.pop();
+        unit.taskQueue.pop_front();
 
         _log.debug("executing next task: pump=%d, zone=%u, amount=%u dl", unit.pump.id(), task.zone, task.amount);
 
@@ -96,6 +96,10 @@ void IrrigationController::processPendingEvents()
 
 bool IrrigationController::enqueueTask(const uint8_t zone, const Decilitres amount, const bool manual)
 {
+    _log.debug("creating pump task: zone=%u, amount=%u, manual=%s",
+        zone, amount, manual ? "yes" : "no"
+    );
+
     if (_draining) {
         _log.warning("can't add task during draining");
         return false;
@@ -112,11 +116,42 @@ bool IrrigationController::enqueueTask(const uint8_t zone, const Decilitres amou
         return false;
     }
 
-    _log.debug("creating pump task: zone=%u, amount=%u, manual=%s",
-        zone, amount, manual ? "yes" : "no"
+    pumpForZone->taskQueue.emplace_back(PumpUnit::Task{ zone, amount, manual });
+
+    return true;
+}
+
+bool IrrigationController::removeTasksForZone(const uint8_t zone)
+{
+    _log.debug("removing pump tasks: zone=%u", zone);
+
+    auto pumpForZone = std::find_if(
+        _pumpUnits.begin(),
+        _pumpUnits.end(),
+        [zone](const PumpUnit& unit) { return unit.pump.containsZone(zone); }
     );
 
-    pumpForZone->taskQueue.emplace(PumpUnit::Task{ zone, amount, manual });
+    if (pumpForZone == _pumpUnits.end()) {
+        _log.error("can't find pump for zone %u", zone);
+        return false;
+    }
+
+    pumpForZone->taskQueue.erase(
+        std::remove_if(
+            std::begin(pumpForZone->taskQueue),
+            std::end(pumpForZone->taskQueue),
+            [zone](const PumpUnit::Task& t) {
+                return t.zone == zone;
+            }
+        ),
+        std::end(pumpForZone->taskQueue)
+    );
+
+    if (pumpForZone->pump.activeZone() == zone && pumpForZone->pump.isRunning()) {
+        _log.debug("stopping the irrigation in the specified zone: zone=%u", zone);
+
+        pumpForZone->pump.stop();
+    }
 
     return true;
 }
@@ -304,40 +339,36 @@ void IrrigationController::setupMqtt()
         _mqtt.pump1Active = running;
     });
 
-    _mqtt.zone1Active.setChangedHandler([this](const bool v) {
-        if (v) {
-            enqueueTaskWithStoredAmount(0);
+    const auto startStopZone = [this](const bool start, const uint8_t zone) {
+        if (start) {
+            enqueueTaskWithStoredAmount(zone);
+        } else {
+            removeTasksForZone(zone);
         }
+    };
+
+    _mqtt.zone1Active.setChangedHandler([startStopZone](const bool v) {
+        startStopZone(v, 0);
     });
 
-    _mqtt.zone2Active.setChangedHandler([this](const bool v) {
-        if (v) {
-            enqueueTaskWithStoredAmount(1);
-        }
+    _mqtt.zone2Active.setChangedHandler([startStopZone](const bool v) {
+        startStopZone(v, 1);
     });
 
-    _mqtt.zone3Active.setChangedHandler([this](const bool v) {
-        if (v) {
-            enqueueTaskWithStoredAmount(2);
-        }
+    _mqtt.zone3Active.setChangedHandler([startStopZone](const bool v) {
+        startStopZone(v, 2);
     });
 
-    _mqtt.zone4Active.setChangedHandler([this](const bool v) {
-        if (v) {
-            enqueueTaskWithStoredAmount(3);
-        }
+    _mqtt.zone4Active.setChangedHandler([startStopZone](const bool v) {
+        startStopZone(v, 3);
     });
 
-    _mqtt.zone5Active.setChangedHandler([this](const bool v) {
-        if (v) {
-            enqueueTaskWithStoredAmount(4);
-        }
+    _mqtt.zone5Active.setChangedHandler([startStopZone](const bool v) {
+        startStopZone(v, 4);
     });
 
-    _mqtt.zone6Active.setChangedHandler([this](const bool v) {
-        if (v) {
-            enqueueTaskWithStoredAmount(5);
-        }
+    _mqtt.zone6Active.setChangedHandler([startStopZone](const bool v) {
+        startStopZone(v, 5);
     });
 }
 

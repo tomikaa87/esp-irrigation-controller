@@ -59,7 +59,7 @@ private:
         {}
 
         Pump pump;
-        std::queue<Task> taskQueue;
+        std::deque<Task> taskQueue;
     };
 
     std::vector<PumpUnit> _pumpUnits;
@@ -132,6 +132,7 @@ private:
 
     bool enqueueTask(uint8_t zone, Decilitres amount, bool manual = false);
     bool enqueueTaskWithStoredAmount(uint8_t zone);
+    bool removeTasksForZone(uint8_t zone);
 
     bool startManualIrrigation(uint8_t zone);
     void stopIrrigation();
