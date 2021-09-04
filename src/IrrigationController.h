@@ -80,12 +80,12 @@ private:
         Mqtt(
             MqttClient& mqttClient
         )
-            : zone1Active(PSTR("irrigctl/zone/1/active"), PSTR("irrigctl/zone/1/active/set"), mqttClient)
-            , zone2Active(PSTR("irrigctl/zone/2/active"), PSTR("irrigctl/zone/2/active/set"), mqttClient)
-            , zone3Active(PSTR("irrigctl/zone/3/active"), PSTR("irrigctl/zone/3/active/set"), mqttClient)
-            , zone4Active(PSTR("irrigctl/zone/4/active"), PSTR("irrigctl/zone/4/active/set"), mqttClient)
-            , zone5Active(PSTR("irrigctl/zone/5/active"), PSTR("irrigctl/zone/5/active/set"), mqttClient)
-            , zone6Active(PSTR("irrigctl/zone/6/active"), PSTR("irrigctl/zone/6/active/set"), mqttClient)
+            : zone1Active(PSTR("irrigctl/zone/1/active"), PSTR("irrigctl/zone/1/active/set"), mqttClient, true)
+            , zone2Active(PSTR("irrigctl/zone/2/active"), PSTR("irrigctl/zone/2/active/set"), mqttClient, true)
+            , zone3Active(PSTR("irrigctl/zone/3/active"), PSTR("irrigctl/zone/3/active/set"), mqttClient, true)
+            , zone4Active(PSTR("irrigctl/zone/4/active"), PSTR("irrigctl/zone/4/active/set"), mqttClient, true)
+            , zone5Active(PSTR("irrigctl/zone/5/active"), PSTR("irrigctl/zone/5/active/set"), mqttClient, true)
+            , zone6Active(PSTR("irrigctl/zone/6/active"), PSTR("irrigctl/zone/6/active/set"), mqttClient, true)
             , zone1PumpedAmount(PSTR("irrigctl/zone/1/pumpedAmount"), mqttClient)
             , zone2PumpedAmount(PSTR("irrigctl/zone/2/pumpedAmount"), mqttClient)
             , zone3PumpedAmount(PSTR("irrigctl/zone/3/pumpedAmount"), mqttClient)

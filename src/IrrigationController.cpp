@@ -303,6 +303,42 @@ void IrrigationController::setupMqtt()
     _pumpUnits[0].pump.addStateChangedHandler([this](const bool running) {
         _mqtt.pump1Active = running;
     });
+
+    _mqtt.zone1Active.setChangedHandler([this](const bool v) {
+        if (v) {
+            enqueueTaskWithStoredAmount(0);
+        }
+    });
+
+    _mqtt.zone2Active.setChangedHandler([this](const bool v) {
+        if (v) {
+            enqueueTaskWithStoredAmount(1);
+        }
+    });
+
+    _mqtt.zone3Active.setChangedHandler([this](const bool v) {
+        if (v) {
+            enqueueTaskWithStoredAmount(2);
+        }
+    });
+
+    _mqtt.zone4Active.setChangedHandler([this](const bool v) {
+        if (v) {
+            enqueueTaskWithStoredAmount(3);
+        }
+    });
+
+    _mqtt.zone5Active.setChangedHandler([this](const bool v) {
+        if (v) {
+            enqueueTaskWithStoredAmount(4);
+        }
+    });
+
+    _mqtt.zone6Active.setChangedHandler([this](const bool v) {
+        if (v) {
+            enqueueTaskWithStoredAmount(5);
+        }
+    });
 }
 
 void IrrigationController::updateMqtt()
