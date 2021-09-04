@@ -109,6 +109,11 @@ void Pump::setLeakDetectedHandler(LeakDetectedHandler&& handler)
     _leakDetectedHandler = std::move(handler);
 }
 
+void Pump::addStateChangedHandler(StateChangedHandler&& handler)
+{
+    _stateChangedHandlers.emplace_back(std::move(handler));
+}
+
 void Pump::changeState(const State newState)
 {
     if (newState == _state) {
@@ -190,6 +195,7 @@ void Pump::startIrrigation()
     _waterFlowErrors = 0;
 
     changeState(State::RampingUp);
+    notifyStateChangedHandlers(true);
 }
 
 void Pump::stopIrrigation(const bool leakCheck)
@@ -214,6 +220,8 @@ void Pump::stopIrrigation(const bool leakCheck)
 
         changeState(State::Idle);
     }
+
+    notifyStateChangedHandlers(false);
 }
 
 void Pump::checkIrrigationState()
@@ -286,4 +294,13 @@ void Pump::checkLeaking()
     }
 
     changeState(State::Idle);
+}
+
+void Pump::notifyStateChangedHandlers(const bool running)
+{
+    for (const auto& h : _stateChangedHandlers) {
+        if (h) {
+            h(running);
+        }
+    }
 }

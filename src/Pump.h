@@ -41,6 +41,9 @@ public:
     using LeakDetectedHandler = std::function<void()>;
     void setLeakDetectedHandler(LeakDetectedHandler&& handler);
 
+    using StateChangedHandler = std::function<void (bool running)>;
+    void addStateChangedHandler(StateChangedHandler&& handler);
+
 private:
     Logger _log;
     const unsigned _id;
@@ -51,6 +54,7 @@ private:
     const Settings& _settings;
 
     LeakDetectedHandler _leakDetectedHandler;
+    std::vector<StateChangedHandler> _stateChangedHandlers;
 
     enum class State
     {
@@ -81,4 +85,6 @@ private:
     void checkIrrigationState();
     void checkRampUpState();
     void checkLeaking();
+
+    void notifyStateChangedHandlers(bool running);
 };

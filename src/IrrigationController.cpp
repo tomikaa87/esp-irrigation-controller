@@ -299,6 +299,10 @@ void IrrigationController::setupMqtt()
             *zoneActiveStates[zone] = open;
         }
     });
+
+    _pumpUnits[0].pump.addStateChangedHandler([this](const bool running) {
+        _mqtt.pump1Active = running;
+    });
 }
 
 void IrrigationController::updateMqtt()
