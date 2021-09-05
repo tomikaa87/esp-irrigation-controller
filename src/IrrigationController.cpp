@@ -136,6 +136,8 @@ bool IrrigationController::removeTasksForZone(const uint8_t zone)
         return false;
     }
 
+    const auto originalSize = pumpForZone->taskQueue.size();
+
     pumpForZone->taskQueue.erase(
         std::remove_if(
             std::begin(pumpForZone->taskQueue),
@@ -146,6 +148,12 @@ bool IrrigationController::removeTasksForZone(const uint8_t zone)
         ),
         std::end(pumpForZone->taskQueue)
     );
+
+    const auto newSize = pumpForZone->taskQueue.size();
+
+    if (newSize < originalSize) {
+        _log.debug("tasks removed from the queue: %d", originalSize - newSize);
+    }
 
     if (pumpForZone->pump.activeZone() == zone && pumpForZone->pump.isRunning()) {
         _log.debug("stopping the irrigation in the specified zone: zone=%u", zone);
@@ -290,94 +298,54 @@ void IrrigationController::setupMqtt()
 
     _log.info("setting up the MQTT interface");
 
-    _mqtt.zone1PresetAmount.setChangedHandler([this](const int v) {
-        _settings.data.irrigation.amounts[0] = v;
-        _settings.save();
-    });
+    for (unsigned zone = 0; zone < Config::Zones; ++zone) {
+        _mqtt.zonePresetAmounts[zone].setChangedHandler([this, zone](const int newAmount) {
+            _log.debug("MQTT: zone preset amount changed: zone=%u, amount=%d", zone, newAmount);
+            _settings.data.irrigation.amounts[zone] = newAmount;
+            _settings.save();
+        });
 
-    _mqtt.zone2PresetAmount.setChangedHandler([this](const int v) {
-        _settings.data.irrigation.amounts[1] = v;
-        _settings.save();
-    });
-
-    _mqtt.zone3PresetAmount.setChangedHandler([this](const int v) {
-        _settings.data.irrigation.amounts[2] = v;
-        _settings.save();
-    });
-
-    _mqtt.zone4PresetAmount.setChangedHandler([this](const int v) {
-        _settings.data.irrigation.amounts[3] = v;
-        _settings.save();
-    });
-
-    _mqtt.zone5PresetAmount.setChangedHandler([this](const int v) {
-        _settings.data.irrigation.amounts[4] = v;
-        _settings.save();
-    });
-
-    _mqtt.zone6PresetAmount.setChangedHandler([this](const int v) {
-        _settings.data.irrigation.amounts[5] = v;
-        _settings.save();
-    });
+        _mqtt.zoneActiveStates[zone].setChangedHandler([this, zone](const bool activate) {
+            _log.debug("MQTT: zone active state changed: zone=%u, activate=%u", zone, activate);
+            if (activate) {
+                enqueueTaskWithStoredAmount(zone);
+            } else {
+                removeTasksForZone(zone);
+            }
+        });
+    }
 
     _zoneController.addZoneChangedHandler([this](const uint8_t zone, const bool open) {
-        const std::array<MqttVariable<bool>*, Config::Zones> zoneActiveStates{
-            &_mqtt.zone1Active,
-            &_mqtt.zone2Active,
-            &_mqtt.zone3Active,
-            &_mqtt.zone4Active,
-            &_mqtt.zone5Active,
-            &_mqtt.zone6Active,
-        };
-
-        if (zone < zoneActiveStates.size()) {
-            *zoneActiveStates[zone] = open;
+        _log.debug("MQTT: updating zone in-use state: zone=%u, open=%u", zone, open);
+        if (zone < _mqtt.zoneInUseStates.size()) {
+            _mqtt.zoneInUseStates[zone] = open;
         }
     });
 
-    _pumpUnits[0].pump.addStateChangedHandler([this](const bool running) {
-        _mqtt.pump1Active = running;
-    });
-
-    const auto startStopZone = [this](const bool start, const uint8_t zone) {
-        if (start) {
-            enqueueTaskWithStoredAmount(zone);
-        } else {
-            removeTasksForZone(zone);
-        }
-    };
-
-    _mqtt.zone1Active.setChangedHandler([startStopZone](const bool v) {
-        startStopZone(v, 0);
-    });
-
-    _mqtt.zone2Active.setChangedHandler([startStopZone](const bool v) {
-        startStopZone(v, 1);
-    });
-
-    _mqtt.zone3Active.setChangedHandler([startStopZone](const bool v) {
-        startStopZone(v, 2);
-    });
-
-    _mqtt.zone4Active.setChangedHandler([startStopZone](const bool v) {
-        startStopZone(v, 3);
-    });
-
-    _mqtt.zone5Active.setChangedHandler([startStopZone](const bool v) {
-        startStopZone(v, 4);
-    });
-
-    _mqtt.zone6Active.setChangedHandler([startStopZone](const bool v) {
-        startStopZone(v, 5);
-    });
+    for (unsigned pumpUnit = 0; pumpUnit < _pumpUnits.size(); ++pumpUnit) {
+        _pumpUnits[pumpUnit].pump.addStateChangedHandler([this, pumpUnit](const bool running) {
+            _log.debug("MQTT: updating pump active state: pumpUnit=%u, running=%u", pumpUnit, running);
+            _mqtt.pumpActiveStates[pumpUnit] = running;
+        });
+    }
 }
 
 void IrrigationController::updateMqtt()
 {
-    _mqtt.zone1PresetAmount = _settings.data.irrigation.amounts[0];
-    _mqtt.zone2PresetAmount = _settings.data.irrigation.amounts[1];
-    _mqtt.zone3PresetAmount = _settings.data.irrigation.amounts[2];
-    _mqtt.zone4PresetAmount = _settings.data.irrigation.amounts[3];
-    _mqtt.zone5PresetAmount = _settings.data.irrigation.amounts[4];
-    _mqtt.zone6PresetAmount = _settings.data.irrigation.amounts[5];
+    for (unsigned zone = 0; zone < Config::Zones; ++zone) {
+        _mqtt.zonePresetAmounts[zone] = _settings.data.irrigation.amounts[zone];
+
+        if (_mqtt.zoneInUseStates[zone]) {
+            _mqtt.zoneActiveStates[zone] = true;
+            continue;
+        }
+
+        _mqtt.zoneActiveStates[zone] = std::any_of(
+            std::begin(_pumpUnits[0].taskQueue),
+            std::end(_pumpUnits[0].taskQueue),
+            [zone](const PumpUnit::Task& t) {
+                return t.zone == zone;
+            }
+        );
+    }
 }

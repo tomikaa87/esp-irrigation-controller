@@ -7,6 +7,7 @@
 namespace Config
 {
     static constexpr auto Zones = 6u;
+    static constexpr auto Pumps = 1u;
 
     // Temporary
     static constexpr auto FlowSensorTicksPerDecilitre = 46; // 463/l
