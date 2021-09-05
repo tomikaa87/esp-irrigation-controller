@@ -82,20 +82,20 @@ private:
             MqttClient& mqttClient
         )
             : zoneActiveStates{
-                MqttVariable<bool>{ PSTR("irrigctl/zone/1/active"), PSTR("irrigctl/zone/1/active/set"), mqttClient, true },
-                MqttVariable<bool>{ PSTR("irrigctl/zone/2/active"), PSTR("irrigctl/zone/2/active/set"), mqttClient, true },
-                MqttVariable<bool>{ PSTR("irrigctl/zone/3/active"), PSTR("irrigctl/zone/3/active/set"), mqttClient, true },
-                MqttVariable<bool>{ PSTR("irrigctl/zone/4/active"), PSTR("irrigctl/zone/4/active/set"), mqttClient, true },
-                MqttVariable<bool>{ PSTR("irrigctl/zone/5/active"), PSTR("irrigctl/zone/5/active/set"), mqttClient, true },
-                MqttVariable<bool>{ PSTR("irrigctl/zone/6/active"), PSTR("irrigctl/zone/6/active/set"), mqttClient, true }
+                MqttVariable<bool>{ PSTR("irrigctl/zone/1/active"), PSTR("irrigctl/zone/1/active/set"), mqttClient },
+                MqttVariable<bool>{ PSTR("irrigctl/zone/2/active"), PSTR("irrigctl/zone/2/active/set"), mqttClient },
+                MqttVariable<bool>{ PSTR("irrigctl/zone/3/active"), PSTR("irrigctl/zone/3/active/set"), mqttClient },
+                MqttVariable<bool>{ PSTR("irrigctl/zone/4/active"), PSTR("irrigctl/zone/4/active/set"), mqttClient },
+                MqttVariable<bool>{ PSTR("irrigctl/zone/5/active"), PSTR("irrigctl/zone/5/active/set"), mqttClient },
+                MqttVariable<bool>{ PSTR("irrigctl/zone/6/active"), PSTR("irrigctl/zone/6/active/set"), mqttClient }
             }
             , zoneInUseStates{
-                MqttVariable<bool>{ PSTR("irrigctl/zone/1/inUse"), mqttClient, true },
-                MqttVariable<bool>{ PSTR("irrigctl/zone/2/inUse"), mqttClient, true },
-                MqttVariable<bool>{ PSTR("irrigctl/zone/3/inUse"), mqttClient, true },
-                MqttVariable<bool>{ PSTR("irrigctl/zone/4/inUse"), mqttClient, true },
-                MqttVariable<bool>{ PSTR("irrigctl/zone/5/inUse"), mqttClient, true },
-                MqttVariable<bool>{ PSTR("irrigctl/zone/6/inUse"), mqttClient, true }
+                MqttVariable<bool>{ PSTR("irrigctl/zone/1/inUse"), mqttClient },
+                MqttVariable<bool>{ PSTR("irrigctl/zone/2/inUse"), mqttClient },
+                MqttVariable<bool>{ PSTR("irrigctl/zone/3/inUse"), mqttClient },
+                MqttVariable<bool>{ PSTR("irrigctl/zone/4/inUse"), mqttClient },
+                MqttVariable<bool>{ PSTR("irrigctl/zone/5/inUse"), mqttClient },
+                MqttVariable<bool>{ PSTR("irrigctl/zone/6/inUse"), mqttClient }
             }
             , zonePumpedAmounts{
                 MqttVariable<int>{ PSTR("irrigctl/zone/1/pumpedAmount"), mqttClient },
