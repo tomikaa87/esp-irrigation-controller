@@ -9,7 +9,7 @@ void setup()
 {
     static ApplicationConfig appConfig;
 
-    appConfig.firmwareVersion = VersionNumber{ 1, 6, 0 };
+    appConfig.firmwareVersion = VersionNumber{ 1, 6, 1 };
 
     appConfig.blynk.appToken = Config::Blynk::AppToken;
     appConfig.blynk.serverHostName = Config::Blynk::ServerHostName;
@@ -24,6 +24,8 @@ void setup()
     appConfig.mqtt.brokerPort = Config::Mqtt::BrokerPort;
     appConfig.mqtt.enabled = true;
     appConfig.mqtt.id = Config::Mqtt::Id;
+    appConfig.mqtt.user = Config::Mqtt::User;
+    appConfig.mqtt.password = Config::Mqtt::Password;
 
     appConfig.otaUpdate.updateCheckIntervalMs = 60000;
     appConfig.otaUpdate.updateUrl = Config::OtaUpdate::FirmwareUpdateUrl;
