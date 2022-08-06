@@ -1,3 +1,8 @@
+//
+// This file must not be called Time.h to avoid collision with
+// the original time.h of the C Runtime Library.
+//
+
 #pragma once
 
 #include <algorithm>

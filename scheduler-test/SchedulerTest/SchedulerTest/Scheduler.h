@@ -1,7 +1,7 @@
 #pragma once
 
 #include "Config.h"
-#include "Time.h"
+#include "Time.hpp"
 #include "Types.h"
 
 #include <bitset>

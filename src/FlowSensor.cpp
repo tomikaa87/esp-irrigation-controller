@@ -8,7 +8,7 @@ static FlowSensor* _flowSensorInstance = nullptr;
 // FIXME: rising edge interrupt is buggy, ISR called continuously while the input is high
 //
 
-ICACHE_RAM_ATTR void _flowSensorIoIsr()
+IRAM_ATTR void _flowSensorIoIsr()
 {
     if (_flowSensorInstance) {
         _flowSensorInstance->onIoInterruptCalled();

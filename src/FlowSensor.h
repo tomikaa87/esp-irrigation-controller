@@ -15,7 +15,7 @@ public:
 
     void task();
 
-    ICACHE_RAM_ATTR void onIoInterruptCalled();
+    IRAM_ATTR void onIoInterruptCalled();
 
 private:
     Logger _log{ "FlowSensor" };

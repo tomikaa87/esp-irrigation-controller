@@ -159,7 +159,7 @@
     <ClInclude Include="PumpController.h" />
     <ClInclude Include="Scheduler.h" />
     <ClInclude Include="Settings.h" />
-    <ClInclude Include="Time.h" />
+    <ClInclude Include="Time.hpp" />
     <ClInclude Include="Types.h" />
     <ClInclude Include="WaterTank.h" />
     <ClInclude Include="ZoneController.h" />

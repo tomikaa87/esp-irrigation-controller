@@ -59,7 +59,7 @@ void IrrigationController::task()
 
 void IrrigationController::processTasks()
 {
-    bool idle = true;
+    [[maybe_unused]] bool idle = true;
 
     for (auto& unit : _pumpUnits) {
         if (!unit.taskQueue.empty() || unit.pump.isRunning()) {
