@@ -18,6 +18,8 @@
     Created on 2020-08-09
 */
 
+#ifdef IOT_ENABLE_BLYNK
+
 #include "Blynk.h"
 #include "Settings.h"
 
@@ -284,3 +286,5 @@ size_t Blynk::virtualPinToZoneIndex(const int pin)
 
     return 0;
 }
+
+#endif

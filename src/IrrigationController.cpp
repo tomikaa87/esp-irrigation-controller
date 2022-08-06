@@ -7,7 +7,9 @@ IrrigationController::IrrigationController(const ApplicationConfig& appConfig)
     : _appConfig(appConfig)
     , _coreApplication(_appConfig)
     , _settings(_coreApplication.settings())
+#ifdef IOT_ENABLE_BLYNK
     , _blynk(_coreApplication.blynkHandler(), _settings)
+#endif
     , _waterTank(_settings)
     , _zoneController(_outputController)
     , _scheduler(_coreApplication.systemClock())
@@ -23,7 +25,9 @@ IrrigationController::IrrigationController(const ApplicationConfig& appConfig)
     _zoneController.closeAll();
 
     setupWebServer();
+#ifdef IOT_ENABLE_BLYNK
     setupBlynk();
+#endif
     setupMqtt();
 }
 
@@ -32,7 +36,9 @@ void IrrigationController::task()
     _flowSensor.task();
     _webServer.task();
     _coreApplication.task();
+#ifdef IOT_ENABLE_BLYNK
     _blynk.task();
+#endif
 
     for (auto& unit : _pumpUnits) {
         unit.pump.task();
@@ -74,11 +80,13 @@ void IrrigationController::processTasks()
         }
     }
 
+#ifdef IOT_ENABLE_BLYNK
     if (_irrigationStartedFromBlynk && idle) {
         _irrigationStartedFromBlynk = false;
         _blynk.setControlsEnabled(true);
         _blynk.resetSelectors();
     }
+#endif
 }
 
 void IrrigationController::processPendingEvents()
@@ -188,6 +196,7 @@ void IrrigationController::stopIrrigation()
     }
 }
 
+#ifdef IOT_ENABLE_BLYNK
 void IrrigationController::setupBlynk()
 {
     _blynk.setStartHandler([this](const std::vector<Blynk::StartedZone>& zones) {
@@ -249,6 +258,7 @@ void IrrigationController::updateBlynkStatus()
 
     _blynk.setStatusText(s);
 }
+#endif
 
 void IrrigationController::startDraining(const uint8_t zone)
 {

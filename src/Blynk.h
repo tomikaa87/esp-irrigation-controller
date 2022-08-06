@@ -20,6 +20,8 @@
 
 #pragma once
 
+#ifdef IOT_ENABLE_BLYNK
+
 #include "Types.h"
 
 #include <Logger.h>
@@ -89,3 +91,5 @@ private:
 
     static size_t virtualPinToZoneIndex(int pin);
 };
+
+#endif

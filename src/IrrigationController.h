@@ -33,7 +33,9 @@ private:
     CoreApplication _coreApplication;
     Settings _settings;
 
+#ifdef IOT_ENABLE_BLYNK
     Blynk _blynk;
+#endif
     OutputController _outputController;
     FlowSensor _flowSensor;
     WaterTank _waterTank;
@@ -74,7 +76,9 @@ private:
     static constexpr auto SlowLoopUpdateIntervalMs = 500;
     uint32_t _lastSlowLoopUpdate = 0;
 
+#ifdef IOT_ENABLE_BLYNK
     bool _irrigationStartedFromBlynk = false;
+#endif
     bool _draining = false;
 
     struct Mqtt {
@@ -135,10 +139,12 @@ private:
     bool startManualIrrigation(uint8_t zone);
     void stopIrrigation();
 
+#ifdef IOT_ENABLE_BLYNK
     void setupBlynk();
 
     void updateBlynk();
     void updateBlynkStatus();
+#endif
 
     void startDraining(uint8_t zone);
     void stopDraining();
