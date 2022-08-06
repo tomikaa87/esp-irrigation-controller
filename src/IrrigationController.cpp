@@ -426,7 +426,8 @@ void IrrigationController::setupMqtt()
             PSTR("Active Irrigation Zone Preset Amount"),
             PSTR("irrigctl_active_zone_preset_amount"),
             PSTR("irrigctl/zone/active/presetAmount")
-        )
+        ),
+        false
     );
 
     _coreApplication.mqttClient().publish(
@@ -435,7 +436,8 @@ void IrrigationController::setupMqtt()
             PSTR("Active Irrigation Zone Pumped Amount"),
             PSTR("irrigctl_active_zone_pumped_amount"),
             PSTR("irrigctl/zone/active/pumpedAmount")
-        )
+        ),
+        false
     );
 
     _coreApplication.mqttClient().publish(
@@ -445,7 +447,8 @@ void IrrigationController::setupMqtt()
             PSTR("irrigctl_active_zone"),
             PSTR("irrigctl/zone/active"),
             false
-        )
+        ),
+        false
     );
 
     _mqtt.activeZone = 0;
