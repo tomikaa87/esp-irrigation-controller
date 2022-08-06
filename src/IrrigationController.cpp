@@ -1,7 +1,9 @@
 #include "IrrigationController.h"
+#include "Utils.h"
 
 #include <algorithm>
 #include <array>
+#include <sstream>
 
 IrrigationController::IrrigationController(const ApplicationConfig& appConfig)
     : _appConfig(appConfig)
@@ -338,6 +340,117 @@ void IrrigationController::setupMqtt()
             _mqtt.pumpActiveStates[pumpUnit] = running;
         });
     }
+
+    const auto makeValveConfig = [](const int zone) {
+        std::stringstream config;
+
+        config << '{';
+        config << Utils::pgmToStdString(R"("icon":"mdi:pipe-valve")");
+        config << Utils::pgmToStdString(R"(,"name":"Irrigation Zone )") << std::to_string(zone) << '"';
+        config << Utils::pgmToStdString(R"(,"object_id":"irrigctl_zone_)") << std::to_string(zone) << '"';
+        config << Utils::pgmToStdString(R"(,"unique_id":"irrigctl_zone_)") << std::to_string(zone) << '"';
+        config << Utils::pgmToStdString(R"(,"command_topic":"irrigctl/zone/)") << std::to_string(zone) << Utils::pgmToStdString(PSTR("/active/set")) << '"';
+        config << Utils::pgmToStdString(R"(,"state_topic":"irrigctl/zone/)") << std::to_string(zone) << Utils::pgmToStdString(PSTR("/active")) << '"';
+        config << Utils::pgmToStdString(R"(,"payload_on":"1")");
+        config << Utils::pgmToStdString(R"(,"payload_off":"0")");
+        config << Utils::pgmToStdString(R"(,"state_on":"1")");
+        config << Utils::pgmToStdString(R"(,"state_off":"0")");
+        config << '}';
+
+        return config.str();
+    };
+
+    const auto makeAmountSettingConfig = [](const int zone) {
+        std::stringstream config;
+
+        config << '{';
+        config << Utils::pgmToStdString(R"("icon":"mdi:water")");
+        config << Utils::pgmToStdString(R"(,"name":"Irrigation Zone )") << std::to_string(zone) << Utils::pgmToStdString(PSTR(" Amount")) << '"';
+        config << Utils::pgmToStdString(R"(,"object_id":"irrigctl_zone_amount_)") << std::to_string(zone) << '"';
+        config << Utils::pgmToStdString(R"(,"unique_id":"irrigctl_zone_amount_)") << std::to_string(zone) << '"';
+        config << Utils::pgmToStdString(R"(,"command_topic":"irrigctl/zone/)") << std::to_string(zone) << Utils::pgmToStdString(PSTR("/presetAmount/set")) << '"';
+        config << Utils::pgmToStdString(R"(,"state_topic":"irrigctl/zone/)") << std::to_string(zone) << Utils::pgmToStdString(PSTR("/presetAmount")) << '"';
+        config << Utils::pgmToStdString(R"(,"min":0)");
+        config << Utils::pgmToStdString(R"(,"max":50)");
+        config << Utils::pgmToStdString(R"(,"step":1)");
+        config << Utils::pgmToStdString(R"(,"unit_of_measurement":"dL")");
+        config << '}';
+
+        return config.str();
+    };
+
+    const auto makeSensorConfig = [](
+        PGM_P name,
+        PGM_P id,
+        PGM_P stateTopic,
+        const bool forAmounts = true
+    ) {
+        std::stringstream config;
+
+        config << '{';
+        if (forAmounts) {
+            config << Utils::pgmToStdString(PSTR(R"("icon":"mdi:water")"));
+        } else {
+            config << Utils::pgmToStdString(PSTR(R"("icon":"mdi:pipe-valve")"));
+        }
+        config << Utils::pgmToStdString(PSTR(R"(,"name":")")) << Utils::pgmToStdString(name) << '"';
+        config << Utils::pgmToStdString(PSTR(R"(,"object_id":")")) << Utils::pgmToStdString(id) << '"';
+        config << Utils::pgmToStdString(PSTR(R"(,"unique_id":")")) << Utils::pgmToStdString(id) << '"';
+        config << Utils::pgmToStdString(PSTR(R"(,"state_topic":")")) << Utils::pgmToStdString(stateTopic) << '"';
+        if (forAmounts) {
+            config << Utils::pgmToStdString(PSTR(R"(,"unit_of_measurement":"dL")"));
+        }
+        config << '}';
+
+        return config.str();
+    };
+
+    for (auto i = 1u; i <= Config::Zones; ++i) {
+        const auto valveConfigTopic =
+            Utils::pgmToStdString(PSTR("homeassistant/switch/irrigctl_zone_"))
+            + std::to_string(i)
+            + Utils::pgmToStdString(PSTR("/config"));
+
+        const auto amountSettingConfigTopic =
+            Utils::pgmToStdString(PSTR("homeassistant/number/irrigctl_zone_amount_"))
+            + std::to_string(i)
+            + Utils::pgmToStdString(PSTR("/config"));
+
+        _coreApplication.mqttClient().publish(valveConfigTopic, makeValveConfig(i));
+        _coreApplication.mqttClient().publish(amountSettingConfigTopic, makeAmountSettingConfig(i));
+    }
+
+    _coreApplication.mqttClient().publish(
+        PSTR("homeassistant/sensor/irrigctl_active_zone_preset_amount/config"),
+        makeSensorConfig(
+            PSTR("Active Irrigation Zone Preset Amount"),
+            PSTR("irrigctl_active_zone_preset_amount"),
+            PSTR("irrigctl/zone/active/presetAmount")
+        )
+    );
+
+    _coreApplication.mqttClient().publish(
+        PSTR("homeassistant/sensor/irrigctl_active_zone_pumped_amount/config"),
+        makeSensorConfig(
+            PSTR("Active Irrigation Zone Pumped Amount"),
+            PSTR("irrigctl_active_zone_pumped_amount"),
+            PSTR("irrigctl/zone/active/pumpedAmount")
+        )
+    );
+
+    _coreApplication.mqttClient().publish(
+        PSTR("homeassistant/sensor/irrigctl_active_zone/config"),
+        makeSensorConfig(
+            PSTR("Active Irrigation Zone"),
+            PSTR("irrigctl_active_zone"),
+            PSTR("irrigctl/zone/active"),
+            false
+        )
+    );
+
+    _mqtt.activeZone = 0;
+    _mqtt.activeZonePresetAmount = 0;
+    _mqtt.activeZonePumpedAmount = 0;
 }
 
 void IrrigationController::updateMqtt()
@@ -357,5 +470,16 @@ void IrrigationController::updateMqtt()
                 return t.zone == zone;
             }
         );
+    }
+
+    if (_pumpUnits[0].pump.isRunning()) {
+        const auto activeZone = _pumpUnits[0].pump.activeZone();
+        _mqtt.activeZone = activeZone + 1; // Indexed from 1
+        _mqtt.activeZonePresetAmount = _settings.data.irrigation.amounts[activeZone];
+        _mqtt.activeZonePumpedAmount = _pumpUnits[0].pump.pumpedAmount();
+    } else {
+        _mqtt.activeZone = 0;
+        _mqtt.activeZonePresetAmount = 0;
+        _mqtt.activeZonePumpedAmount = 0;
     }
 }

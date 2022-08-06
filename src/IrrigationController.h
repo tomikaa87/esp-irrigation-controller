@@ -120,6 +120,9 @@ private:
             , pumpActiveStates{
                 MqttVariable<bool>{ PSTR("irrigctl/pump/1/active"), mqttClient }
             }
+            , activeZone{ PSTR("irrigctl/zone/active"), mqttClient }
+            , activeZonePresetAmount{ PSTR("irrigctl/zone/active/presetAmount"), mqttClient }
+            , activeZonePumpedAmount{ PSTR("irrigctl/zone/active/pumpedAmount"), mqttClient }
         {}
 
         std::array<MqttVariable<bool>, Config::Zones> zoneActiveStates;
@@ -127,6 +130,9 @@ private:
         std::array<MqttVariable<int>, Config::Zones> zonePumpedAmounts;
         std::array<MqttVariable<Decilitres>, Config::Zones> zonePresetAmounts;
         std::array<MqttVariable<bool>, Config::Pumps> pumpActiveStates;
+        MqttVariable<int> activeZone;
+        MqttVariable<Decilitres> activeZonePresetAmount;
+        MqttVariable<Decilitres> activeZonePumpedAmount;
     } _mqtt;
 
     void processTasks();
