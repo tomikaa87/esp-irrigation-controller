@@ -416,8 +416,8 @@ void IrrigationController::setupMqtt()
             + std::to_string(i)
             + Utils::pgmToStdString(PSTR("/config"));
 
-        _coreApplication.mqttClient().publish(valveConfigTopic, makeValveConfig(i));
-        _coreApplication.mqttClient().publish(amountSettingConfigTopic, makeAmountSettingConfig(i));
+        _coreApplication.mqttClient().publish(valveConfigTopic, makeValveConfig(i), false);
+        _coreApplication.mqttClient().publish(amountSettingConfigTopic, makeAmountSettingConfig(i), false);
     }
 
     _coreApplication.mqttClient().publish(
