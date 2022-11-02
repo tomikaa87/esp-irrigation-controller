@@ -9,7 +9,7 @@ void setup()
 {
     static ApplicationConfig appConfig;
 
-    appConfig.firmwareVersion = VersionNumber{ 1, 8, 3 };
+    appConfig.firmwareVersion = VersionNumber{ 1, 8, 4 };
 
 #ifdef IOT_ENABLE_BLYNK
     appConfig.blynk.appToken = Config::Blynk::AppToken;
@@ -40,7 +40,7 @@ void setup()
 
     irrigationController.reset(new IrrigationController(appConfig));
 
-    Serial.println("Initialization finished");
+    Serial.printf_P(PSTR("Initialization finished\r\n"));
 }
 
 void loop()
