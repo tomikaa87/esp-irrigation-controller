@@ -38,11 +38,17 @@ public:
     uint8_t activeZone() const;
     bool isManual() const;
 
-    using LeakDetectedHandler = std::function<void()>;
-    void setLeakDetectedHandler(LeakDetectedHandler&& handler);
-
     using StateChangedHandler = std::function<void (bool running)>;
     void addStateChangedHandler(StateChangedHandler&& handler);
+
+    enum class Error {
+        LeakDetected,
+        FlowRateTooLow,
+        Busy
+    };
+
+    using ErrorHandler = std::function<void (Error error)>;
+    void setErrorHandler(ErrorHandler&& handler);
 
 private:
     Logger _log;
@@ -53,8 +59,8 @@ private:
     ZoneController& _zoneController;
     const Settings& _settings;
 
-    LeakDetectedHandler _leakDetectedHandler;
     std::vector<StateChangedHandler> _stateChangedHandlers;
+    ErrorHandler _errorHandler;
 
     enum class State
     {

@@ -123,6 +123,10 @@ private:
             , activeZone{ PSTR("irrigctl/zone/active"), mqttClient }
             , activeZonePresetAmount{ PSTR("irrigctl/zone/active/presetAmount"), mqttClient }
             , activeZonePumpedAmount{ PSTR("irrigctl/zone/active/pumpedAmount"), mqttClient }
+            , zoneErrorCount{ PSTR("irrigctl/zone/errorCount"), mqttClient }
+            , lastErroredZone{ PSTR("irrigctl/zone/lastErrored"), mqttClient }
+            , lastErroredPump{ PSTR("irrigctl/pump/lastErrored"), mqttClient }
+            , lastPumpError{ PSTR("irrigctl/pump/lastError"), mqttClient }
         {}
 
         std::array<MqttVariable<bool>, Config::Zones> zoneActiveStates;
@@ -133,6 +137,10 @@ private:
         MqttVariable<int> activeZone;
         MqttVariable<Decilitres> activeZonePresetAmount;
         MqttVariable<Decilitres> activeZonePumpedAmount;
+        MqttVariable<int> zoneErrorCount;
+        MqttVariable<int> lastErroredZone;
+        MqttVariable<int> lastErroredPump;
+        MqttVariable<std::string> lastPumpError;
     } _mqtt;
 
     void processTasks();
@@ -159,5 +167,7 @@ private:
 
     void setupMqtt();
     void updateMqtt();
+
+    void onPumpError(int pump, Pump::Error error);
 };
 

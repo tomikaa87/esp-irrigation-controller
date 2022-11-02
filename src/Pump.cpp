@@ -50,6 +50,11 @@ bool Pump::start(const uint8_t zone, const Decilitres amount)
 
     if (_state != State::Idle) {
         _log.error("can't start irrigation, operation is already in progress");
+
+        if (_errorHandler) {
+            _errorHandler(Error::Busy);
+        }
+
         return false;
     }
 
@@ -104,14 +109,14 @@ bool Pump::isManual() const
     return isRunning() && _manualIrrigation;
 }
 
-void Pump::setLeakDetectedHandler(LeakDetectedHandler&& handler)
-{
-    _leakDetectedHandler = std::move(handler);
-}
-
 void Pump::addStateChangedHandler(StateChangedHandler&& handler)
 {
     _stateChangedHandlers.emplace_back(std::move(handler));
+}
+
+void Pump::setErrorHandler(ErrorHandler&& handler)
+{
+    _errorHandler = std::move(handler);
 }
 
 void Pump::changeState(const State newState)
@@ -249,6 +254,11 @@ void Pump::checkIrrigationState()
 
         if (++_waterFlowErrors >= 3) {
             _log.error("stopping due to insufficient water flow");
+
+            if (_errorHandler) {
+                _errorHandler(Error::FlowRateTooLow);
+            }
+
             changeState(State::Stopping);
             return;
         }
@@ -288,8 +298,8 @@ void Pump::checkLeaking()
 
     if (flowSensorTicksDelta > _settings.data.flowSensor.leakCheckDetectionTicks) {
         _log.warning("leak detected!");
-        if (_leakDetectedHandler) {
-            _leakDetectedHandler();
+        if (_errorHandler) {
+            _errorHandler(Error::LeakDetected);
         }
     }
 

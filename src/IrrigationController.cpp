@@ -26,6 +26,12 @@ IrrigationController::IrrigationController(const ApplicationConfig& appConfig)
     _settings.load();
     _zoneController.closeAll();
 
+    for (auto i = 0u; i < _pumpUnits.size(); ++i) {
+        _pumpUnits[i].pump.setErrorHandler([this, i](const Pump::Error error) {
+            onPumpError(i, error);
+        });
+    }
+
     setupWebServer();
 #ifdef IOT_ENABLE_BLYNK
     setupBlynk();
@@ -451,9 +457,56 @@ void IrrigationController::setupMqtt()
         false
     );
 
+    _coreApplication.mqttClient().publish(
+        PSTR("homeassistant/sensor/irrigctl_zone_error_count/config"),
+        makeSensorConfig(
+            PSTR("Zone Error Count"),
+            PSTR("irrigctl_zone_error_count"),
+            PSTR("irrigctl/zone/errorCount"),
+            false
+        ),
+        false
+    );
+
+    _coreApplication.mqttClient().publish(
+        PSTR("homeassistant/sensor/irrigctl_last_errored_zone/config"),
+        makeSensorConfig(
+            PSTR("Last Errored Zone"),
+            PSTR("irrigctl_last_errored_zone"),
+            PSTR("irrigctl/zone/lastErrored"),
+            false
+        ),
+        false
+    );
+
+    _coreApplication.mqttClient().publish(
+        PSTR("homeassistant/sensor/irrigctl_last_errored_pump/config"),
+        makeSensorConfig(
+            PSTR("Last Errored Pump"),
+            PSTR("irrigctl_last_errored_pump"),
+            PSTR("irrigctl/pump/lastErrored"),
+            false
+        ),
+        false
+    );
+
+    _coreApplication.mqttClient().publish(
+        PSTR("homeassistant/sensor/irrigctl_last_pump_error/config"),
+        makeSensorConfig(
+            PSTR("Last Pump Error"),
+            PSTR("irrigctl_last_pump_error"),
+            PSTR("irrigctl/pump/lastError"),
+            false
+        ),
+        false
+    );
+
     _mqtt.activeZone = 0;
     _mqtt.activeZonePresetAmount = 0;
     _mqtt.activeZonePumpedAmount = 0;
+    _mqtt.zoneErrorCount = 0;
+    _mqtt.lastErroredZone = -1;
+    _mqtt.lastErroredPump = -1;
 }
 
 void IrrigationController::updateMqtt()
@@ -485,4 +538,32 @@ void IrrigationController::updateMqtt()
         _mqtt.activeZonePresetAmount = 0;
         _mqtt.activeZonePumpedAmount = 0;
     }
+}
+
+void IrrigationController::onPumpError(const int pump, const Pump::Error error)
+{
+    _mqtt.zoneErrorCount = static_cast<int>(_mqtt.zoneErrorCount) + 1;
+
+    _mqtt.lastErroredPump = pump + 1;
+
+    _mqtt.lastErroredZone = static_cast<int>(_mqtt.activeZone);
+
+    _mqtt.lastPumpError = [&]() -> std::string {
+        switch (error) {
+            case Pump::Error::LeakDetected:
+                return "LeakDetected";
+            case Pump::Error::FlowRateTooLow:
+                return "FlowRateTooLow";
+            case Pump::Error::Busy:
+                return "Busy";
+        }
+        return "Unknown";
+    }();
+
+    _log.error(
+        "onPumpError: pump=%d, zone=%d, error=%s",
+        static_cast<int>(_mqtt.lastErroredPump),
+        static_cast<int>(_mqtt.lastErroredZone),
+        static_cast<std::string>(_mqtt.lastPumpError).c_str()
+    );
 }
