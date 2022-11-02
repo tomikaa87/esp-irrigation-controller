@@ -351,16 +351,16 @@ void IrrigationController::setupMqtt()
         std::stringstream config;
 
         config << '{';
-        config << Utils::pgmToStdString(R"("icon":"mdi:pipe-valve")");
-        config << Utils::pgmToStdString(R"(,"name":"Irrigation Zone )") << std::to_string(zone) << '"';
-        config << Utils::pgmToStdString(R"(,"object_id":"irrigctl_zone_)") << std::to_string(zone) << '"';
-        config << Utils::pgmToStdString(R"(,"unique_id":"irrigctl_zone_)") << std::to_string(zone) << '"';
-        config << Utils::pgmToStdString(R"(,"command_topic":"irrigctl/zone/)") << std::to_string(zone) << Utils::pgmToStdString(PSTR("/active/set")) << '"';
-        config << Utils::pgmToStdString(R"(,"state_topic":"irrigctl/zone/)") << std::to_string(zone) << Utils::pgmToStdString(PSTR("/active")) << '"';
-        config << Utils::pgmToStdString(R"(,"payload_on":"1")");
-        config << Utils::pgmToStdString(R"(,"payload_off":"0")");
-        config << Utils::pgmToStdString(R"(,"state_on":"1")");
-        config << Utils::pgmToStdString(R"(,"state_off":"0")");
+        config << Utils::pgmToStdString(PSTR(R"("icon":"mdi:pipe-valve")"));
+        config << Utils::pgmToStdString(PSTR(R"(,"name":"Irrigation Zone )")) << std::to_string(zone) << '"';
+        config << Utils::pgmToStdString(PSTR(R"(,"object_id":"irrigctl_zone_)")) << std::to_string(zone) << '"';
+        config << Utils::pgmToStdString(PSTR(R"(,"unique_id":"irrigctl_zone_)")) << std::to_string(zone) << '"';
+        config << Utils::pgmToStdString(PSTR(R"(,"command_topic":"irrigctl/zone/)")) << std::to_string(zone) << Utils::pgmToStdString(PSTR("/active/set")) << '"';
+        config << Utils::pgmToStdString(PSTR(R"(,"state_topic":"irrigctl/zone/)")) << std::to_string(zone) << Utils::pgmToStdString(PSTR("/active")) << '"';
+        config << Utils::pgmToStdString(PSTR(R"(,"payload_on":"1")"));
+        config << Utils::pgmToStdString(PSTR(R"(,"payload_off":"0")"));
+        config << Utils::pgmToStdString(PSTR(R"(,"state_on":"1")"));
+        config << Utils::pgmToStdString(PSTR(R"(,"state_off":"0")"));
         config << '}';
 
         return config.str();
@@ -370,16 +370,16 @@ void IrrigationController::setupMqtt()
         std::stringstream config;
 
         config << '{';
-        config << Utils::pgmToStdString(R"("icon":"mdi:water")");
-        config << Utils::pgmToStdString(R"(,"name":"Irrigation Zone )") << std::to_string(zone) << Utils::pgmToStdString(PSTR(" Amount")) << '"';
-        config << Utils::pgmToStdString(R"(,"object_id":"irrigctl_zone_amount_)") << std::to_string(zone) << '"';
-        config << Utils::pgmToStdString(R"(,"unique_id":"irrigctl_zone_amount_)") << std::to_string(zone) << '"';
-        config << Utils::pgmToStdString(R"(,"command_topic":"irrigctl/zone/)") << std::to_string(zone) << Utils::pgmToStdString(PSTR("/presetAmount/set")) << '"';
-        config << Utils::pgmToStdString(R"(,"state_topic":"irrigctl/zone/)") << std::to_string(zone) << Utils::pgmToStdString(PSTR("/presetAmount")) << '"';
-        config << Utils::pgmToStdString(R"(,"min":0)");
-        config << Utils::pgmToStdString(R"(,"max":50)");
-        config << Utils::pgmToStdString(R"(,"step":1)");
-        config << Utils::pgmToStdString(R"(,"unit_of_measurement":"dL")");
+        config << Utils::pgmToStdString(PSTR(R"("icon":"mdi:water")"));
+        config << Utils::pgmToStdString(PSTR(R"(,"name":"Irrigation Zone )")) << std::to_string(zone) << Utils::pgmToStdString(PSTR(" Amount")) << '"';
+        config << Utils::pgmToStdString(PSTR(R"(,"object_id":"irrigctl_zone_amount_)")) << std::to_string(zone) << '"';
+        config << Utils::pgmToStdString(PSTR(R"(,"unique_id":"irrigctl_zone_amount_)")) << std::to_string(zone) << '"';
+        config << Utils::pgmToStdString(PSTR(R"(,"command_topic":"irrigctl/zone/)")) << std::to_string(zone) << Utils::pgmToStdString(PSTR("/presetAmount/set")) << '"';
+        config << Utils::pgmToStdString(PSTR(R"(,"state_topic":"irrigctl/zone/)")) << std::to_string(zone) << Utils::pgmToStdString(PSTR("/presetAmount")) << '"';
+        config << Utils::pgmToStdString(PSTR(R"(,"min":0)"));
+        config << Utils::pgmToStdString(PSTR(R"(,"max":50)"));
+        config << Utils::pgmToStdString(PSTR(R"(,"step":1)"));
+        config << Utils::pgmToStdString(PSTR(R"(,"unit_of_measurement":"dL")"));
         config << '}';
 
         return config.str();
