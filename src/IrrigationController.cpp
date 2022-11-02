@@ -573,8 +573,8 @@ void IrrigationController::onPumpError(const int pump, const Pump::Error error)
         return "Unknown";
     }();
 
-    _log.error(
-        "onPumpError: pump=%d, zone=%d, error=%s",
+    _log.error_P(
+        PSTR("onPumpError: pump=%d, zone=%d, error=%s"),
         static_cast<int>(_mqtt.lastErroredPump),
         static_cast<int>(_mqtt.lastErroredZone),
         static_cast<std::string>(_mqtt.lastPumpError).c_str()
