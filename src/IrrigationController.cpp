@@ -81,10 +81,10 @@ void IrrigationController::processTasks()
         const auto task = unit.taskQueue.front();
         unit.taskQueue.pop_front();
 
-        _log.debug("executing next task: pump=%d, zone=%u, amount=%u dl", unit.pump.id(), task.zone, task.amount);
+        _log.debug_P(PSTR("executing next task: pump=%d, zone=%u, amount=%u dl"), unit.pump.id(), task.zone, task.amount);
 
         if (!unit.pump.start(task.zone, task.amount)) {
-            _log.error("can't start pumping");
+            _log.error_P(PSTR("can't start pumping"));
         }
     }
 
@@ -105,7 +105,7 @@ void IrrigationController::processPendingEvents()
 
     const auto event = _scheduler.nextPendingEvent();
 
-    _log.debug("loading scheduler event zone=%u, amount=%u", event.amount, event.zone);
+    _log.debug_P(PSTR("loading scheduler event zone=%u, amount=%u"), event.amount, event.zone);
 
     enqueueTask(event.amount, event.zone);
 }
@@ -117,7 +117,7 @@ bool IrrigationController::enqueueTask(const uint8_t zone, const Decilitres amou
     );
 
     if (_draining) {
-        _log.warning("can't add task during draining");
+        _log.warning_P(PSTR("can't add task during draining"));
         return false;
     }
 
@@ -128,7 +128,7 @@ bool IrrigationController::enqueueTask(const uint8_t zone, const Decilitres amou
     );
 
     if (pumpForZone == _pumpUnits.end()) {
-        _log.error("can't find pump for zone %u", zone);
+        _log.error_P(PSTR("can't find pump for zone %u"), zone);
         return false;
     }
 
@@ -139,7 +139,7 @@ bool IrrigationController::enqueueTask(const uint8_t zone, const Decilitres amou
 
 bool IrrigationController::removeTasksForZone(const uint8_t zone)
 {
-    _log.debug("removing pump tasks: zone=%u", zone);
+    _log.debug_P(PSTR("removing pump tasks: zone=%u"), zone);
 
     auto pumpForZone = std::find_if(
         _pumpUnits.begin(),
@@ -148,7 +148,7 @@ bool IrrigationController::removeTasksForZone(const uint8_t zone)
     );
 
     if (pumpForZone == _pumpUnits.end()) {
-        _log.error("can't find pump for zone %u", zone);
+        _log.error_P(PSTR("can't find pump for zone %u"), zone);
         return false;
     }
 
@@ -168,11 +168,11 @@ bool IrrigationController::removeTasksForZone(const uint8_t zone)
     const auto newSize = pumpForZone->taskQueue.size();
 
     if (newSize < originalSize) {
-        _log.debug("tasks removed from the queue: %d", originalSize - newSize);
+        _log.debug_P(PSTR("tasks removed from the queue: %d"), originalSize - newSize);
     }
 
     if (pumpForZone->pump.activeZone() == zone && pumpForZone->pump.isRunning()) {
-        _log.debug("stopping the irrigation in the specified zone: zone=%u", zone);
+        _log.debug_P(PSTR("stopping the irrigation in the specified zone: zone=%u"), zone);
 
         pumpForZone->pump.stop();
     }
@@ -183,7 +183,7 @@ bool IrrigationController::removeTasksForZone(const uint8_t zone)
 bool IrrigationController::enqueueTaskWithStoredAmount(const uint8_t zone)
 {
     if (zone >= Config::Zones) {
-        _log.error("can't add task for invalid zone: %u", zone);
+        _log.error_P(PSTR("can't add task for invalid zone: %u"), zone);
         return false;
     }
 
@@ -270,7 +270,7 @@ void IrrigationController::updateBlynkStatus()
 
 void IrrigationController::startDraining(const uint8_t zone)
 {
-    _log.info("start draining process");
+    _log.info_P(PSTR("start draining process"));
 
     _draining = true;
     _zoneController.open(zone);
@@ -278,7 +278,7 @@ void IrrigationController::startDraining(const uint8_t zone)
 
 void IrrigationController::stopDraining()
 {
-    _log.info("stop draining process");
+    _log.info_P(PSTR("stop draining process"));
 
     _draining = false;
     _zoneController.closeAll();
@@ -286,7 +286,7 @@ void IrrigationController::stopDraining()
 
 void IrrigationController::setupWebServer()
 {
-    _log.info("setting up web server");
+    _log.info_P(PSTR("setting up web server"));
 
     _webServer.setZoneStartedHandler([this](const uint8_t zone) {
         return startManualIrrigation(zone);
@@ -314,17 +314,17 @@ void IrrigationController::setupMqtt()
         updateMqtt();
     });
 
-    _log.info("setting up the MQTT interface");
+    _log.info_P(PSTR("setting up the MQTT interface"));
 
     for (unsigned zone = 0; zone < Config::Zones; ++zone) {
         _mqtt.zonePresetAmounts[zone].setChangedHandler([this, zone](const int newAmount) {
-            _log.debug("MQTT: zone preset amount changed: zone=%u, amount=%d", zone, newAmount);
+            _log.debug_P(PSTR("MQTT: zone preset amount changed: zone=%u, amount=%d"), zone, newAmount);
             _settings.data.irrigation.amounts[zone] = newAmount;
             _settings.save();
         });
 
         _mqtt.zoneActiveStates[zone].setChangedHandler([this, zone](const bool activate) {
-            _log.debug("MQTT: zone active state changed: zone=%u, activate=%u", zone, activate);
+            _log.debug_P(PSTR("MQTT: zone active state changed: zone=%u, activate=%u"), zone, activate);
             if (activate) {
                 enqueueTaskWithStoredAmount(zone);
             } else {
@@ -334,7 +334,7 @@ void IrrigationController::setupMqtt()
     }
 
     _zoneController.addZoneChangedHandler([this](const uint8_t zone, const bool open) {
-        _log.debug("MQTT: updating zone in-use state: zone=%u, open=%u", zone, open);
+        _log.debug_P(PSTR("MQTT: updating zone in-use state: zone=%u, open=%u"), zone, open);
         if (zone < _mqtt.zoneInUseStates.size()) {
             _mqtt.zoneInUseStates[zone] = open;
         }
@@ -342,7 +342,7 @@ void IrrigationController::setupMqtt()
 
     for (unsigned pumpUnit = 0; pumpUnit < _pumpUnits.size(); ++pumpUnit) {
         _pumpUnits[pumpUnit].pump.addStateChangedHandler([this, pumpUnit](const bool running) {
-            _log.debug("MQTT: updating pump active state: pumpUnit=%u, running=%u", pumpUnit, running);
+            _log.debug_P(PSTR("MQTT: updating pump active state: pumpUnit=%u, running=%u"), pumpUnit, running);
             _mqtt.pumpActiveStates[pumpUnit] = running;
         });
     }

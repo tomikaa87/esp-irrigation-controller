@@ -17,7 +17,7 @@ IRAM_ATTR void _flowSensorIoIsr()
 
 FlowSensor::FlowSensor()
 {
-    _log.info("initializing GPIO input");
+    _log.info_P(PSTR("initializing GPIO input"));
 
     pinMode(Config::Pins::FlowSensorInput, INPUT);
     attachInterrupt(Config::Pins::FlowSensorInput, _flowSensorIoIsr, FALLING);
@@ -37,7 +37,7 @@ std::size_t FlowSensor::ticks() const
 
 void FlowSensor::reset()
 {
-    _log.info("resetting flow sensor tick count");
+    _log.info_P(PSTR("resetting flow sensor tick count"));
 
     _ticks = 0;
 }
@@ -51,7 +51,7 @@ void FlowSensor::task()
 
     if (delta > 0 && millis() - ts > 1000) {
         ts = millis();
-        _log.debug("ticks=%u, delta=%u", _ticks, delta);
+        _log.debug_P(PSTR("ticks=%u, delta=%u"), _ticks, delta);
         lastTicks = _ticks;
     }
 }

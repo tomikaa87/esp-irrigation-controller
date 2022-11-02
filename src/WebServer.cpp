@@ -13,13 +13,13 @@ WebServer::WebServer(
     , _flowSensor(flowSensor)
     , _server(appConfig.webServer.port)
 {
-    _log.info("setting up static contents");
+    _log.info_P(PSTR("setting up static contents"));
 
     _server.serveStatic("/", LittleFS, "/index.html");
     _server.serveStatic("/index.html", LittleFS, "/index.html");
     _server.serveStatic("/jquery-3.6.0.min.js", LittleFS, "/jquery-3.6.0.min.js");
 
-    _log.info("setting up API controller");
+    _log.info_P(PSTR("setting up API controller"));
 
     _server.on("/api/zone/0/start", [this] { onApiZoneStart(0); });
     _server.on("/api/zone/1/start", [this] { onApiZoneStart(1); });
@@ -84,7 +84,7 @@ void WebServer::shutdown()
         return;
     }
 
-    _log.info("shutting down");
+    _log.info_P(PSTR("shutting down"));
 
     _server.close();
     LittleFS.end();
@@ -103,7 +103,7 @@ void WebServer::task()
 
 void WebServer::onApiZoneStart(const uint8_t zone)
 {
-    _log.info("zone start requested, zone=%u", zone);
+    _log.info_P(PSTR("zone start requested, zone=%u"), zone);
 
     if (zone >= Config::Zones) {
         _server.send(400, "text/plain", "No such zone");
@@ -111,7 +111,7 @@ void WebServer::onApiZoneStart(const uint8_t zone)
     }
 
     if (!_zoneStartedHandler) {
-        _log.error("zone started handler not registered");
+        _log.error_P(PSTR("zone started handler not registered"));
         _server.send(500, "text/plain", "Missing zone started handler");
         return;
     }
@@ -126,10 +126,10 @@ void WebServer::onApiZoneStart(const uint8_t zone)
 
 void WebServer::onApiStop()
 {
-    _log.info("stop requested");
+    _log.info_P(PSTR("stop requested"));
 
     if (!_stopHandler) {
-        _log.error("stop handler not registered");
+        _log.error_P(PSTR("stop handler not registered"));
         _server.send(500, "text/plain", "Missing stop handler");
         return;
     }
@@ -145,7 +145,7 @@ void WebServer::onApiStop()
 void WebServer::onApiStatus()
 {
 #if 0
-    _log.info("status requested");
+    _log.info_P(PSTR("status requested"));
 #endif
 
     auto payload = nlohmann::json{

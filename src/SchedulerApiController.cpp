@@ -9,12 +9,12 @@ static const char* DayShortNames[] = {
 SchedulerApiController::ParseResult SchedulerApiController::parseInputJson(const nlohmann::json& in, std::vector<Event>& events)
 {
     if (in.is_null()) {
-        _log.warning("input json is null");
+        _log.warning_P(PSTR("input json is null"));
         return ParseResult::InvalidInput;
     }
 
     if (in.is_object()) {
-        _log.debug("parsing single input object");
+        _log.debug_P(PSTR("parsing single input object"));
         Event event;
         const auto result = parseInputObject(in, event);
         if (result != ParseResult::Ok) {
@@ -25,7 +25,7 @@ SchedulerApiController::ParseResult SchedulerApiController::parseInputJson(const
     }
 
     if (in.is_array()) {
-        _log.debug("parsing multiple input objects");
+        _log.debug_P(PSTR("parsing multiple input objects"));
         for (const auto& obj : in) {
             Event event;
             const auto result = parseInputObject(obj, event);
@@ -37,7 +37,7 @@ SchedulerApiController::ParseResult SchedulerApiController::parseInputJson(const
         return ParseResult::Ok;
     }
 
-    _log.warning("invalid input JSON");
+    _log.warning_P(PSTR("invalid input JSON"));
 
     return ParseResult::InvalidInput;
 }
@@ -46,7 +46,7 @@ SchedulerApiController::ParseResult SchedulerApiController::parseDaysArray(const
 {
     for (const auto& day : in) {
         if (!day.is_string()) {
-            _log.warning("invalid days array: string expected");
+            _log.warning_P(PSTR("invalid days array: string expected"));
             return ParseResult::InvalidDaysArray;
         }
 
@@ -75,13 +75,13 @@ SchedulerApiController::ParseResult SchedulerApiController::parseZonesArray(cons
 {
     for (const auto& zone : in) {
         if (!zone.is_number_integer()) {
-            _log.warning("invalid zones array: integer expected");
+            _log.warning_P(PSTR("invalid zones array: integer expected"));
             return ParseResult::InvalidZonesArray;
         }
 
         const auto zi = zone.get<unsigned>();
         if (zi >= Config::Zones) {
-            _log.warning("invalid zones array: invalid zone number");
+            _log.warning_P(PSTR("invalid zones array: invalid zone number"));
             return ParseResult::InvalidZonesArray;
         }
 
@@ -94,24 +94,24 @@ SchedulerApiController::ParseResult SchedulerApiController::parseZonesArray(cons
 SchedulerApiController::ParseResult SchedulerApiController::parseInputObject(const nlohmann::json& in, Event& output)
 {
     if (!in.contains("event")) {
-        _log.warning("invalid object: event is missing");
+        _log.warning_P(PSTR("invalid object: event is missing"));
         return ParseResult::InvalidInputObject;
     }
 
     const auto& event = in["event"];
 
     if (!event.contains("amount")) {
-        _log.warning("invalid event object: amount field is missing");
+        _log.warning_P(PSTR("invalid event object: amount field is missing"));
         return ParseResult::InvalidInputObject;
     }
 
     if (!event.contains("zones")) {
-        _log.warning("invalid event object: zones field is missing");
+        _log.warning_P(PSTR("invalid event object: zones field is missing"));
         return ParseResult::InvalidInputObject;
     }
 
     if (!event.contains("days")) {
-        _log.warning("invalid event object: zones field is missing");
+        _log.warning_P(PSTR("invalid event object: zones field is missing"));
         return ParseResult::InvalidInputObject;
     }
 
@@ -120,17 +120,17 @@ SchedulerApiController::ParseResult SchedulerApiController::parseInputObject(con
     const auto& days = event["days"];
 
     if (!amount.is_number_integer()) {
-        _log.warning("invalid event object: amount must be and integer value");
+        _log.warning_P(PSTR("invalid event object: amount must be and integer value"));
         return ParseResult::InvalidInputObject;
     }
 
     if (!zones.is_array()) {
-        _log.warning("invalid event object: zones must be an array");
+        _log.warning_P(PSTR("invalid event object: zones must be an array"));
         return ParseResult::InvalidInputObject;
     }
 
     if (!days.is_array()) {
-        _log.warning("invalid event object: days must be an array");
+        _log.warning_P(PSTR("invalid event object: days must be an array"));
         return ParseResult::InvalidInputObject;
     }
 

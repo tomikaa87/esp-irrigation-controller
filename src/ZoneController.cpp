@@ -8,7 +8,7 @@ ZoneController::ZoneController(OutputController& outputController)
 
 void ZoneController::open(const uint8_t zone)
 {
-    _log.info("opening zone: zone=%u", zone);
+    _log.info_P(PSTR("opening zone: zone=%u"), zone);
 
     _outputController.activate(Config::Pins::ZoneOutputBase + zone);
 
@@ -17,7 +17,7 @@ void ZoneController::open(const uint8_t zone)
 
 void ZoneController::close(const uint8_t zone)
 {
-    _log.info("closing zone: zone=%u", zone);
+    _log.info_P(PSTR("closing zone: zone=%u"), zone);
 
     _outputController.deactive(Config::Pins::ZoneOutputBase + zone);
 
@@ -26,7 +26,7 @@ void ZoneController::close(const uint8_t zone)
 
 void ZoneController::openAll()
 {
-    _log.info("opening all zones");
+    _log.info_P(PSTR("opening all zones"));
 
     for (auto i = 0u; i < Config::Zones; ++i) {
         _outputController.activate(Config::Pins::ZoneOutputBase + i);
@@ -36,7 +36,7 @@ void ZoneController::openAll()
 
 void ZoneController::closeAll()
 {
-    _log.info("closing all zones");
+    _log.info_P(PSTR("closing all zones"));
 
     for (auto i = 0u; i < Config::Zones; ++i) {
         _outputController.deactive(Config::Pins::ZoneOutputBase + i);

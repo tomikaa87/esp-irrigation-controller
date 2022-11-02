@@ -87,7 +87,7 @@ void Blynk::setStopHandler(StopHandler&& handler)
 
 void Blynk::setControlsEnabled(const bool enabled)
 {
-    _log.debug("setting controls %s", enabled ? "enabled" : "disabled");
+    _log.debug_P(PSTR("setting controls %s", enabled ? "enabled" : "disabled"));
     _controlsEnabled = enabled;
 }
 
@@ -113,7 +113,7 @@ void Blynk::setStatusText(const std::string& text)
 
 void Blynk::resetSelectors()
 {
-    _log.debug("resetting zone selectors");
+    _log.debug_P(PSTR("resetting zone selectors"));
 
     for (auto pin = VirtualPins::Select::Zone0, zone = 0; pin <= VirtualPins::Select::Zone5; ++pin, ++zone) {
         _handler.writePin(pin, Variant{ 0 });
@@ -205,21 +205,21 @@ void Blynk::onPinWritten(const int pin, const Variant& value)
             )
         );
 
-        _log.debug("amount changed, zone=%u, amount=%u", zoneIdx, amount);
+        _log.debug_P(PSTR("amount changed, zone=%u, amount=%u"), zoneIdx, amount);
         _settings.data.irrigation.amounts[zoneIdx] = amount;
         saveSettingsDeferred();
     } else if (pin >= VirtualPins::Select::Zone0 && pin <= VirtualPins::Select::Zone5) {
         const auto zoneIdx = virtualPinToZoneIndex(pin);
         auto& zone = _zones[zoneIdx];
         zone.selected = static_cast<int>(value) > 0;
-        _log.debug("selection changed, zone=%u, selected=%u", zoneIdx, zone.selected);
+        _log.debug_P(PSTR("selection changed, zone=%u, selected=%u"), zoneIdx, zone.selected);
     }
 
 }
 
 void Blynk::onStartButtonPressed()
 {
-    _log.debug("START button pressed");
+    _log.debug_P(PSTR("START button pressed"));
 
     std::vector<StartedZone> zones;
 
@@ -234,7 +234,7 @@ void Blynk::onStartButtonPressed()
 
         const auto amount = _settings.data.irrigation.amounts[i];
 
-        _log.debug("starting selected zone, index=%u, amount=%u", i, amount);
+        _log.debug_P(PSTR("starting selected zone, index=%u, amount=%u"), i, amount);
 
         StartedZone sz;
         sz.amount = amount;
@@ -244,12 +244,12 @@ void Blynk::onStartButtonPressed()
     }
 
     if (zones.empty()) {
-        _log.debug("no zone selected to start");
+        _log.debug_P(PSTR("no zone selected to start"));
         return;
     }
 
     if (!_startHandler) {
-        _log.warning("startHandler is empty");
+        _log.warning_P(PSTR("startHandler is empty"));
         return;
     }
 
@@ -258,10 +258,10 @@ void Blynk::onStartButtonPressed()
 
 void Blynk::onStopButtonPressed()
 {
-    _log.debug("STOP button pressed");
+    _log.debug_P(PSTR("STOP button pressed"));
 
     if (!_stopHandler) {
-        _log.warning("stopHandler is empty");
+        _log.warning_P(PSTR("stopHandler is empty"));
         return;
     }
 

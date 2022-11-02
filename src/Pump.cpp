@@ -49,7 +49,7 @@ bool Pump::start(const uint8_t zone, const Decilitres amount)
     );
 
     if (_state != State::Idle) {
-        _log.error("can't start irrigation, operation is already in progress");
+        _log.error_P(PSTR("can't start irrigation, operation is already in progress"));
 
         if (_errorHandler) {
             _errorHandler(Error::Busy);
@@ -69,7 +69,7 @@ bool Pump::start(const uint8_t zone, const Decilitres amount)
 
 void Pump::stop()
 {
-    _log.warning("manual stop requested");
+    _log.warning_P(PSTR("manual stop requested"));
 
     // Stop without leak checking
     stopIrrigation(false);
@@ -125,7 +125,7 @@ void Pump::changeState(const State newState)
         return;
     }
 
-    _log.debug("changing state: %s -> %s", toString(_state), toString(newState));
+    _log.debug_P(PSTR("changing state: %s -> %s"), toString(_state), toString(newState));
 
     _state = newState;
 }
@@ -178,24 +178,25 @@ const char* Pump::toString(State state)
 
 void Pump::startIrrigation()
 {
-    _log.info("starting irrigation, amount=%u, manual=%s",
+    _log.info_P(
+        PSTR("starting irrigation, amount=%u, manual=%s"),
         _requestedAmount,
         _manualIrrigation ? "yes" : "no"
     );
 
-    _log.debug("resetting flow sensor");
+    _log.debug_P(PSTR("resetting flow sensor"));
     _flowSensor.reset();
 
-    _log.debug("opening zone %u", _requestedZone);
+    _log.debug_P(PSTR("opening zone %u"), _requestedZone);
     _zoneController.open(_requestedZone);
 
-    _log.debug("starting pump %u", _id);
+    _log.debug_P(PSTR("starting pump %u"), _id);
     _outputController.activate(Config::Pins::PumpOutputBase + _id);
 
-    _log.debug("resetting ramp-up timer");
+    _log.debug_P(PSTR("resetting ramp-up timer"));
     _rampUpStartTicks = millis();
 
-    _log.debug("ramping up for %u ms", Config::Pump::PumpRampUpTimeMs);
+    _log.debug_P(PSTR("ramping up for %u ms"), Config::Pump::PumpRampUpTimeMs);
 
     _waterFlowErrors = 0;
 
@@ -205,23 +206,23 @@ void Pump::startIrrigation()
 
 void Pump::stopIrrigation(const bool leakCheck)
 {
-    _log.info("stopping irrigation");
+    _log.info_P(PSTR("stopping irrigation"));
 
-    _log.debug("stopping pump");
+    _log.debug_P(PSTR("stopping pump"));
     _outputController.deactive(Config::Pins::PumpOutputBase + _id);
 
-    _log.debug("closing zone");
+    _log.debug_P(PSTR("closing zone"));
     _zoneController.close(_requestedZone);
 
     if (leakCheck) {
         _lastCheckTimestamp = millis();
         _lastFlowSensorTicks = _flowSensor.ticks();
 
-        _log.debug("checking leaks for %u ms", Config::Pump::LeakCheckLengthMs);
+        _log.debug_P(PSTR("checking leaks for %u ms"), Config::Pump::LeakCheckLengthMs);
 
         changeState(State::CheckLeaking);
     } else {
-        _log.info("stopping without leak checking");
+        _log.info_P(PSTR("stopping without leak checking"));
 
         changeState(State::Idle);
     }
@@ -239,21 +240,21 @@ void Pump::checkIrrigationState()
     const auto flowSensorTicks = _flowSensor.ticks();
     const auto flowSensorTicksDelta = flowSensorTicks - _lastFlowSensorTicks;
     _lastFlowSensorTicks = flowSensorTicks;
-    _log.debug("flow sensor ticks delta: %u", flowSensorTicksDelta);
+    _log.debug_P(PSTR("flow sensor ticks delta: %u"), flowSensorTicksDelta);
 
     // FIXME use TicksPerDecilitre from Settings
     const auto totalAmount = static_cast<double>(flowSensorTicks) / Config::FlowSensorTicksPerDecilitre; // _settings.data.flowSensor.ticksPerDecilitres;
-    _log.debug("total amount: %0.1f", totalAmount);
+    _log.debug_P(PSTR("total amount: %0.1f"), totalAmount);
 
     const Decilitres remainingAmount = _requestedAmount - totalAmount;
-    _log.debug("remaining amount: %d", remainingAmount);
+    _log.debug_P(PSTR("remaining amount: %d"), remainingAmount);
 
     // Check if water flow is sufficient to avoid running the pump dry
     if (flowSensorTicksDelta < Config::Pump::FlowSensorMinDeltaTicks) {
-        _log.warning("insufficient water flow detected");
+        _log.warning_P(PSTR("insufficient water flow detected"));
 
         if (++_waterFlowErrors >= 3) {
-            _log.error("stopping due to insufficient water flow");
+            _log.error_P(PSTR("stopping due to insufficient water flow"));
 
             if (_errorHandler) {
                 _errorHandler(Error::FlowRateTooLow);
@@ -267,7 +268,7 @@ void Pump::checkIrrigationState()
     // Check if the requested amount is pumped out
     if (!_manualIrrigation && totalAmount >= _requestedAmount)
     {
-        _log.debug("requested amount pumped out, stopping");
+        _log.debug_P(PSTR("requested amount pumped out, stopping"));
         changeState(State::Stopping);
     }
 }
@@ -277,10 +278,10 @@ void Pump::checkRampUpState()
     if (millis() - _rampUpStartTicks < Config::Pump::PumpRampUpTimeMs)
         return;
 
-    _log.debug("ramp-up finished");
+    _log.debug_P(PSTR("ramp-up finished"));
 
     const auto flowSensorCurrentTicks = _flowSensor.ticks();
-    _log.debug("flow sensor ticks after ramp-up: %u", flowSensorCurrentTicks);
+    _log.debug_P(PSTR("flow sensor ticks after ramp-up: %u"), flowSensorCurrentTicks);
     _lastFlowSensorTicks = flowSensorCurrentTicks;
 
     changeState(State::Pumping);
@@ -294,10 +295,10 @@ void Pump::checkLeaking()
         return;
 
     const auto flowSensorTicksDelta = _flowSensor.ticks() - _lastFlowSensorTicks;
-    _log.debug("flow sensor ticks delta after leak checking: %u", flowSensorTicksDelta);
+    _log.debug_P(PSTR("flow sensor ticks delta after leak checking: %u"), flowSensorTicksDelta);
 
     if (flowSensorTicksDelta > _settings.data.flowSensor.leakCheckDetectionTicks) {
-        _log.warning("leak detected!");
+        _log.warning_P(PSTR("leak detected!"));
         if (_errorHandler) {
             _errorHandler(Error::LeakDetected);
         }

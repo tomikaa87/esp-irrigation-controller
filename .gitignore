@@ -47,3 +47,6 @@ Release/
 .pio
 
 PrivateConfig.h
+
+# macOS
+.DS_Store
