@@ -125,6 +125,7 @@ private:
             , activeZonePumpedAmount{ PSTR("irrigctl/zone/active/pumpedAmount"), mqttClient }
             , zoneErrorCount{ PSTR("irrigctl/zone/errorCount"), mqttClient }
             , lastErroredZone{ PSTR("irrigctl/zone/lastErrored"), mqttClient }
+            , lastActiveZone{ PSTR("irrigctl/zone/lastActive"), mqttClient }
             , lastErroredPump{ PSTR("irrigctl/pump/lastErrored"), mqttClient }
             , lastPumpError{ PSTR("irrigctl/pump/lastError"), mqttClient }
         {}
@@ -139,6 +140,7 @@ private:
         MqttVariable<Decilitres> activeZonePumpedAmount;
         MqttVariable<int> zoneErrorCount;
         MqttVariable<int> lastErroredZone;
+        MqttVariable<int> lastActiveZone;
         MqttVariable<int> lastErroredPump;
         MqttVariable<std::string> lastPumpError;
     } _mqtt;

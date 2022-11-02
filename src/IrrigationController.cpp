@@ -480,6 +480,17 @@ void IrrigationController::setupMqtt()
     );
 
     _coreApplication.mqttClient().publish(
+        PSTR("homeassistant/sensor/irrigctl_last_active_zone/config"),
+        makeSensorConfig(
+            PSTR("Last Active Zone"),
+            PSTR("irrigctl_last_active_zone"),
+            PSTR("irrigctl/zone/lastActive"),
+            false
+        ),
+        false
+    );
+
+    _coreApplication.mqttClient().publish(
         PSTR("homeassistant/sensor/irrigctl_last_errored_pump/config"),
         makeSensorConfig(
             PSTR("Last Errored Pump"),
@@ -506,6 +517,7 @@ void IrrigationController::setupMqtt()
     _mqtt.activeZonePumpedAmount = 0;
     _mqtt.zoneErrorCount = 0;
     _mqtt.lastErroredZone = -1;
+    _mqtt.lastActiveZone = -1;
     _mqtt.lastErroredPump = -1;
 }
 
@@ -531,6 +543,7 @@ void IrrigationController::updateMqtt()
     if (_pumpUnits[0].pump.isRunning()) {
         const auto activeZone = _pumpUnits[0].pump.activeZone();
         _mqtt.activeZone = activeZone + 1; // Indexed from 1
+        _mqtt.lastActiveZone = static_cast<int>(_mqtt.activeZone);
         _mqtt.activeZonePresetAmount = _settings.data.irrigation.amounts[activeZone];
         _mqtt.activeZonePumpedAmount = _pumpUnits[0].pump.pumpedAmount();
     } else {
