@@ -86,12 +86,36 @@ private:
             MqttClient& mqttClient
         )
             : zoneActiveStates{
-                MqttVariable<bool>{ PSTR("irrigctl/zone/1/active"), PSTR("irrigctl/zone/1/active/set"), mqttClient },
-                MqttVariable<bool>{ PSTR("irrigctl/zone/2/active"), PSTR("irrigctl/zone/2/active/set"), mqttClient },
-                MqttVariable<bool>{ PSTR("irrigctl/zone/3/active"), PSTR("irrigctl/zone/3/active/set"), mqttClient },
-                MqttVariable<bool>{ PSTR("irrigctl/zone/4/active"), PSTR("irrigctl/zone/4/active/set"), mqttClient },
-                MqttVariable<bool>{ PSTR("irrigctl/zone/5/active"), PSTR("irrigctl/zone/5/active/set"), mqttClient },
-                MqttVariable<bool>{ PSTR("irrigctl/zone/6/active"), PSTR("irrigctl/zone/6/active/set"), mqttClient }
+                MqttVariable<bool>{
+                    PSTR("irrigctl/zone/1/active"),
+                    PSTR("irrigctl/zone/1/active/set"),
+                    mqttClient
+                },
+                MqttVariable<bool>{
+                    PSTR("irrigctl/zone/2/active"),
+                    PSTR("irrigctl/zone/2/active/set"),
+                    mqttClient
+                },
+                MqttVariable<bool>{
+                    PSTR("irrigctl/zone/3/active"),
+                    PSTR("irrigctl/zone/3/active/set"),
+                    mqttClient
+                },
+                MqttVariable<bool>{
+                    PSTR("irrigctl/zone/4/active"),
+                    PSTR("irrigctl/zone/4/active/set"),
+                    mqttClient
+                },
+                MqttVariable<bool>{
+                    PSTR("irrigctl/zone/5/active"),
+                    PSTR("irrigctl/zone/5/active/set"),
+                    mqttClient
+                },
+                MqttVariable<bool>{
+                    PSTR("irrigctl/zone/6/active"),
+                    PSTR("irrigctl/zone/6/active/set"),
+                    mqttClient
+                }
             }
             , zoneInUseStates{
                 MqttVariable<bool>{ PSTR("irrigctl/zone/1/inUse"), mqttClient },
@@ -110,12 +134,36 @@ private:
                 MqttVariable<int>{ PSTR("irrigctl/zone/6/pumpedAmount"), mqttClient }
             }
             , zonePresetAmounts{
-                MqttVariable<Decilitres>{ PSTR("irrigctl/zone/1/presetAmount"), PSTR("irrigctl/zone/1/presetAmount/set"), mqttClient },
-                MqttVariable<Decilitres>{ PSTR("irrigctl/zone/2/presetAmount"), PSTR("irrigctl/zone/2/presetAmount/set"), mqttClient },
-                MqttVariable<Decilitres>{ PSTR("irrigctl/zone/3/presetAmount"), PSTR("irrigctl/zone/3/presetAmount/set"), mqttClient },
-                MqttVariable<Decilitres>{ PSTR("irrigctl/zone/4/presetAmount"), PSTR("irrigctl/zone/4/presetAmount/set"), mqttClient },
-                MqttVariable<Decilitres>{ PSTR("irrigctl/zone/5/presetAmount"), PSTR("irrigctl/zone/5/presetAmount/set"), mqttClient },
-                MqttVariable<Decilitres>{ PSTR("irrigctl/zone/6/presetAmount"), PSTR("irrigctl/zone/6/presetAmount/set"), mqttClient }
+                MqttVariable<Decilitres>{
+                    PSTR("irrigctl/zone/1/presetAmount"),
+                    PSTR("irrigctl/zone/1/presetAmount/set"),
+                    mqttClient
+                },
+                MqttVariable<Decilitres>{
+                    PSTR("irrigctl/zone/2/presetAmount"),
+                    PSTR("irrigctl/zone/2/presetAmount/set"),
+                    mqttClient
+                },
+                MqttVariable<Decilitres>{
+                    PSTR("irrigctl/zone/3/presetAmount"),
+                    PSTR("irrigctl/zone/3/presetAmount/set"),
+                    mqttClient
+                },
+                MqttVariable<Decilitres>{
+                    PSTR("irrigctl/zone/4/presetAmount"),
+                    PSTR("irrigctl/zone/4/presetAmount/set"),
+                    mqttClient
+                },
+                MqttVariable<Decilitres>{
+                    PSTR("irrigctl/zone/5/presetAmount"),
+                    PSTR("irrigctl/zone/5/presetAmount/set"),
+                    mqttClient
+                },
+                MqttVariable<Decilitres>{
+                    PSTR("irrigctl/zone/6/presetAmount"),
+                    PSTR("irrigctl/zone/6/presetAmount/set"),
+                    mqttClient
+                }
             }
             , pumpActiveStates{
                 MqttVariable<bool>{ PSTR("irrigctl/pump/1/active"), mqttClient }
@@ -128,6 +176,21 @@ private:
             , lastActiveZone{ PSTR("irrigctl/zone/lastActive"), mqttClient }
             , lastErroredPump{ PSTR("irrigctl/pump/lastErrored"), mqttClient }
             , lastPumpError{ PSTR("irrigctl/pump/lastError"), mqttClient }
+            , flowSensorTicksPerDecilitre{
+                PSTR("irrigctl/flowSensor/ticksPerDecilitre"),
+                PSTR("irrigctl/flowSensor/ticksPerDecilitre/set"),
+                mqttClient
+            }
+            , flowSensorErrorDetectionTicksDelta{
+                PSTR("irrigctl/flowSensor/errorDetectionTicksDelta"),
+                PSTR("irrigctl/flowSensor/errorDetectionTicksDelta/set"),
+                mqttClient
+            }
+            , flowSensorLeakDetectionTicksDelta{
+                PSTR("irrigctl/flowSensor/leakDetectionTicksDelta"),
+                PSTR("irrigctl/flowSensor/leakDetectionTicksDelta/set"),
+                mqttClient
+            }
         {}
 
         std::array<MqttVariable<bool>, Config::Zones> zoneActiveStates;
@@ -143,6 +206,9 @@ private:
         MqttVariable<int> lastActiveZone;
         MqttVariable<int> lastErroredPump;
         MqttVariable<std::string> lastPumpError;
+        MqttVariable<int> flowSensorTicksPerDecilitre;
+        MqttVariable<int> flowSensorErrorDetectionTicksDelta;
+        MqttVariable<int> flowSensorLeakDetectionTicksDelta;
     } _mqtt;
 
     void processTasks();

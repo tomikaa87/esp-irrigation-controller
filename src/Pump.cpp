@@ -87,7 +87,7 @@ bool Pump::isRunning() const
 
 Decilitres Pump::pumpedAmount() const
 {
-    return _flowSensor.ticks() / Config::FlowSensorTicksPerDecilitre;
+    return _flowSensor.ticks() / _settings.data.flowSensor.ticksPerDecilitre;
 }
 
 Decilitres Pump::remainingAmount() const
@@ -242,16 +242,26 @@ void Pump::checkIrrigationState()
     _lastFlowSensorTicks = flowSensorTicks;
     _log.debug_P(PSTR("flow sensor ticks delta: %u"), flowSensorTicksDelta);
 
-    // FIXME use TicksPerDecilitre from Settings
-    const auto totalAmount = static_cast<double>(flowSensorTicks) / Config::FlowSensorTicksPerDecilitre; // _settings.data.flowSensor.ticksPerDecilitres;
-    _log.debug_P(PSTR("total amount: %0.1f"), totalAmount);
+    const auto totalAmount =
+        static_cast<double>(flowSensorTicks)
+        / _settings.data.flowSensor.ticksPerDecilitre;
+
+    _log.debug_P(
+        PSTR("total amount: %0.1f, ticksPerDecilitre: %u"),
+        totalAmount,
+        _settings.data.flowSensor.ticksPerDecilitre
+    );
 
     const Decilitres remainingAmount = _requestedAmount - totalAmount;
     _log.debug_P(PSTR("remaining amount: %d"), remainingAmount);
 
     // Check if water flow is sufficient to avoid running the pump dry
-    if (flowSensorTicksDelta < Config::Pump::FlowSensorMinDeltaTicks) {
-        _log.warning_P(PSTR("insufficient water flow detected"));
+    if (flowSensorTicksDelta < _settings.data.flowSensor.errorDetectionTicksDelta) {
+        _log.warning_P(
+            PSTR("insufficient water flow detected, flowSensorTicksDelta: %u, errorDetectionTicksDelta: %u"),
+            flowSensorTicksDelta,
+            _settings.data.flowSensor.errorDetectionTicksDelta
+        );
 
         if (++_waterFlowErrors >= 3) {
             _log.error_P(PSTR("stopping due to insufficient water flow"));
@@ -297,7 +307,7 @@ void Pump::checkLeaking()
     const auto flowSensorTicksDelta = _flowSensor.ticks() - _lastFlowSensorTicks;
     _log.debug_P(PSTR("flow sensor ticks delta after leak checking: %u"), flowSensorTicksDelta);
 
-    if (flowSensorTicksDelta > _settings.data.flowSensor.leakCheckDetectionTicks) {
+    if (flowSensorTicksDelta > _settings.data.flowSensor.leakDetectionTicksDelta) {
         _log.warning_P(PSTR("leak detected!"));
         if (_errorHandler) {
             _errorHandler(Error::LeakDetected);

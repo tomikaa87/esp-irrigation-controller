@@ -9,9 +9,6 @@ namespace Config
     static constexpr auto Zones = 6u;
     static constexpr auto Pumps = 1u;
 
-    // Temporary
-    static constexpr auto FlowSensorTicksPerDecilitre = 46; // 463/l
-
     namespace Blynk
     {
         static constexpr auto SettingsSaveTimeoutMs = 2000;
@@ -37,6 +34,5 @@ namespace Config
         static constexpr int32_t PumpRampUpTimeMs = 2000;
         static constexpr int32_t LeakCheckLengthMs = 5000;
         static constexpr int32_t FlowSensorCheckIntervalMs = 1000;
-        static constexpr int32_t FlowSensorMinDeltaTicks = 5;
     }
 }

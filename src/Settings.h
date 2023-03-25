@@ -17,9 +17,9 @@ public:
 
     DECLARE_SETTINGS_STRUCT(FlowSensorSettings)
     {
-        uint16_t ticksPerDecilitres = 46;
-        uint16_t errorDetectionTicksDelta = 10;
-        uint16_t leakCheckDetectionTicks = 0;
+        uint16_t ticksPerDecilitre = 46; // 463/l
+        uint16_t errorDetectionTicksDelta = 5;
+        uint16_t leakDetectionTicksDelta = 5;
     };
 
     DECLARE_SETTINGS_STRUCT(IrrigationSettings)

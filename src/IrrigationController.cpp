@@ -376,7 +376,7 @@ void IrrigationController::setupMqtt()
         config << Utils::pgmToStdString(PSTR(R"(,"unique_id":"irrigctl_zone_amount_)")) << std::to_string(zone) << '"';
         config << Utils::pgmToStdString(PSTR(R"(,"command_topic":"irrigctl/zone/)")) << std::to_string(zone) << Utils::pgmToStdString(PSTR("/presetAmount/set")) << '"';
         config << Utils::pgmToStdString(PSTR(R"(,"state_topic":"irrigctl/zone/)")) << std::to_string(zone) << Utils::pgmToStdString(PSTR("/presetAmount")) << '"';
-        config << Utils::pgmToStdString(PSTR(R"(,"min":0)"));
+        config << Utils::pgmToStdString(PSTR(R"(,"min":1)"));
         config << Utils::pgmToStdString(PSTR(R"(,"max":50)"));
         config << Utils::pgmToStdString(PSTR(R"(,"step":1)"));
         config << Utils::pgmToStdString(PSTR(R"(,"unit_of_measurement":"dL")"));
@@ -407,6 +407,33 @@ void IrrigationController::setupMqtt()
             config << Utils::pgmToStdString(PSTR(R"(,"unit_of_measurement":"dL")"));
         }
         config << '}';
+
+        return config.str();
+    };
+
+    const auto makeFlowSensorSettingConfig = [](
+        PGM_P name,
+        PGM_P id,
+        PGM_P stateTopic,
+        PGM_P commandTopic,
+        int min,
+        int max,
+        int step = 1
+    ) {
+        std::stringstream config;
+
+        config 
+            << '{'
+            << Utils::pgmToStdString(PSTR(R"("icon":"mdi:gauge")"))
+            << Utils::pgmToStdString(PSTR(R"(,"name":"Flow Sensor )")) << Utils::pgmToStdString(name) << '"'
+            << Utils::pgmToStdString(PSTR(R"(,"object_id":"irrigctl_flow_sensor_)")) << Utils::pgmToStdString(id) << '"'
+            << Utils::pgmToStdString(PSTR(R"(,"unique_id":"irrigctl_flow_sensor_)")) << Utils::pgmToStdString(id) << '"'
+            << Utils::pgmToStdString(PSTR(R"(,"command_topic":"irrigctl/flowSensor/)")) << Utils::pgmToStdString(commandTopic) << '"'
+            << Utils::pgmToStdString(PSTR(R"(,"state_topic":"irrigctl/flowSensor/)")) << Utils::pgmToStdString(stateTopic) << '"'
+            << Utils::pgmToStdString(PSTR(R"(,"min":)")) << std::to_string(min)
+            << Utils::pgmToStdString(PSTR(R"(,"max":)")) << std::to_string(max)
+            << Utils::pgmToStdString(PSTR(R"(,"step":)")) << std::to_string(step)
+            << '}';
 
         return config.str();
     };
@@ -512,6 +539,45 @@ void IrrigationController::setupMqtt()
         false
     );
 
+    _coreApplication.mqttClient().publish(
+        PSTR("homeassistant/number/irrigctl_flow_sensor_ticks_per_decilitre/config"),
+        makeFlowSensorSettingConfig(
+            PSTR("Ticks/Decilitre"),
+            PSTR("ticks_per_decilitre"),
+            PSTR("ticksPerDecilitre"),
+            PSTR("ticksPerDecilitre/set"),
+            1,
+            200
+        ),
+        false
+    );
+
+    _coreApplication.mqttClient().publish(
+        PSTR("homeassistant/number/irrigctl_flow_sensor_error_dectection_ticks_delta/config"),
+        makeFlowSensorSettingConfig(
+            PSTR("Error Detection Ticks Delta"),
+            PSTR("error_dectection_ticks_delta"),
+            PSTR("errorDetectionTicksDelta"),
+            PSTR("errorDetectionTicksDelta/set"),
+            1,
+            50
+        ),
+        false
+    );
+
+    _coreApplication.mqttClient().publish(
+        PSTR("homeassistant/number/irrigctl_flow_sensor_leak_dectection_ticks_delta/config"),
+        makeFlowSensorSettingConfig(
+            PSTR("Leak Detection Ticks Delta"),
+            PSTR("leak_dectection_ticks_delta"),
+            PSTR("leakDetectionTicksDelta"),
+            PSTR("leakDetectionTicksDelta/set"),
+            1,
+            50
+        ),
+        false
+    );
+
     _mqtt.activeZone = 0;
     _mqtt.activeZonePresetAmount = 0;
     _mqtt.activeZonePumpedAmount = 0;
@@ -519,6 +585,33 @@ void IrrigationController::setupMqtt()
     _mqtt.lastErroredZone = -1;
     _mqtt.lastActiveZone = -1;
     _mqtt.lastErroredPump = -1;
+    _mqtt.flowSensorTicksPerDecilitre =
+        _settings.data.flowSensor.ticksPerDecilitre;
+    _mqtt.flowSensorErrorDetectionTicksDelta =
+        _settings.data.flowSensor.errorDetectionTicksDelta;
+    _mqtt.flowSensorLeakDetectionTicksDelta =
+        _settings.data.flowSensor.leakDetectionTicksDelta;
+
+    _mqtt.flowSensorTicksPerDecilitre.setChangedHandler([this](const int v) {
+        if (v < 1 || v > 200) {
+            return;
+        }
+        _settings.data.flowSensor.ticksPerDecilitre = v;
+    });
+
+    _mqtt.flowSensorErrorDetectionTicksDelta.setChangedHandler([this](const int v) {
+        if (v < 1 || v > 50) {
+            return;
+        }
+        _settings.data.flowSensor.errorDetectionTicksDelta = v;
+    });
+
+    _mqtt.flowSensorLeakDetectionTicksDelta.setChangedHandler([this](const int v) {
+        if (v < 1 || v > 50) {
+            return;
+        }
+        _settings.data.flowSensor.leakDetectionTicksDelta = v;
+    });
 }
 
 void IrrigationController::updateMqtt()
@@ -539,6 +632,10 @@ void IrrigationController::updateMqtt()
             }
         );
     }
+
+    _mqtt.flowSensorErrorDetectionTicksDelta = _settings.data.flowSensor.errorDetectionTicksDelta;
+    _mqtt.flowSensorLeakDetectionTicksDelta = _settings.data.flowSensor.leakDetectionTicksDelta;
+    _mqtt.flowSensorTicksPerDecilitre = _settings.data.flowSensor.ticksPerDecilitre;
 
     if (_pumpUnits[0].pump.isRunning()) {
         const auto activeZone = _pumpUnits[0].pump.activeZone();
