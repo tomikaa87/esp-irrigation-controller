@@ -16,6 +16,7 @@
 #include <network/MQTT/MqttVariable.h>
 
 #include <array>
+#include <ctime>
 #include <deque>
 
 class MqttClient;
@@ -176,6 +177,7 @@ private:
             , lastActiveZone{ PSTR("irrigctl/zone/lastActive"), mqttClient }
             , lastErroredPump{ PSTR("irrigctl/pump/lastErrored"), mqttClient }
             , lastPumpError{ PSTR("irrigctl/pump/lastError"), mqttClient }
+            , lastErrorTimestamp{ PSTR("irrigctl/pump/lastErrorTimestamp"), mqttClient }
             , flowSensorTicksPerDecilitre{
                 PSTR("irrigctl/flowSensor/ticksPerDecilitre"),
                 PSTR("irrigctl/flowSensor/ticksPerDecilitre/set"),
@@ -206,6 +208,7 @@ private:
         MqttVariable<int> lastActiveZone;
         MqttVariable<int> lastErroredPump;
         MqttVariable<std::string> lastPumpError;
+        MqttVariable<std::time_t> lastErrorTimestamp;
         MqttVariable<int> flowSensorTicksPerDecilitre;
         MqttVariable<int> flowSensorErrorDetectionTicksDelta;
         MqttVariable<int> flowSensorLeakDetectionTicksDelta;

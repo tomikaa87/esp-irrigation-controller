@@ -540,6 +540,17 @@ void IrrigationController::setupMqtt()
     );
 
     _coreApplication.mqttClient().publish(
+        PSTR("homeassistant/sensor/irrigctl_last_error_timestamp/config"),
+        makeSensorConfig(
+            PSTR("Last Pump Error Timestamp"),
+            PSTR("irrigctl_last_error_timestamp"),
+            PSTR("irrigctl/pump/lastErrorTimestamp"),
+            false
+        ),
+        false
+    );
+
+    _coreApplication.mqttClient().publish(
         PSTR("homeassistant/number/irrigctl_flow_sensor_ticks_per_decilitre/config"),
         makeFlowSensorSettingConfig(
             PSTR("Ticks/Decilitre"),
@@ -585,6 +596,7 @@ void IrrigationController::setupMqtt()
     _mqtt.lastErroredZone = -1;
     _mqtt.lastActiveZone = -1;
     _mqtt.lastErroredPump = -1;
+    _mqtt.lastErrorTimestamp = -1;
     _mqtt.flowSensorTicksPerDecilitre =
         _settings.data.flowSensor.ticksPerDecilitre;
     _mqtt.flowSensorErrorDetectionTicksDelta =
@@ -669,6 +681,8 @@ void IrrigationController::onPumpError(const int pump, const Pump::Error error)
         }
         return "Unknown";
     }();
+
+    _mqtt.lastErrorTimestamp = time(nullptr);
 
     _log.error_P(
         PSTR("onPumpError: pump=%d, zone=%d, error=%s"),
